@@ -6881,6 +6881,9 @@ def form1a_events(request, id):
                    'vals': vals})
 
 
+
+
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def save_form1a(request):
@@ -7058,19 +7061,20 @@ def save_form1a(request):
     jsonResponse.append({'msg': msg})
     return JsonResponse(jsonResponse, content_type='application/json', safe=False)
 
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-def edit_form1a(request):
-    jsonForm1AData = []
-    try:
-        msg = 'The page you are looking for is under construction!'        
-    except Exception, e:
-        msg = 'An error occured : %s' %str(e)
-        print str(e)
-    jsonForm1AData.append({ 'msg': msg })
-    return JsonResponse(jsonForm1AData,
-                        content_type='application/json',
-                        safe=False)
+def edit_form1a(request, id, btn_event_type, btn_event_pk):
+    init_data = RegPerson.objects.filter(pk=id)
+    check_fields = ['sex_id']
+    vals = get_dict(field_name=check_fields)
+    form = OVCF1AForm(initial={'person': id})
+    return render(request,
+                  'forms/edit_form1a.html',
+                  {'form': form, 'init_data': init_data,
+                   'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type})
+
+
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
@@ -7086,9 +7090,22 @@ def view_form1a(request):
                         content_type='application/json',
                         safe=False)
 
+
+
+@login_required(login_url='/')
+def delete_form1a(request, id):
+    init_data = RegPerson.objects.filter(pk=id)
+    check_fields = ['sex_id']
+    vals = get_dict(field_name=check_fields)
+    form = OVCF1AForm(initial={'person': id})
+    return render(request,
+                  'forms/form1a_events.html',
+                  {'form': form, 'init_data': init_data,
+                   'vals': vals})
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-def delete_form1a(request):
+def delete_form1aa(request):
     jsonForm1AData = []
     try:
         msg = 'The page you are looking for is under construction!'        
@@ -7105,7 +7122,6 @@ def delete_form1a(request):
 def manage_form1a_events(request):
     msg = ''
     jsonForm1AEventsData = []
-
     try:
         person = request.POST.get('person')
         ovccareevents = OVCCareEvents.objects.filter(person=person, event_type_id='FSAM', is_void=False)
@@ -7123,7 +7139,8 @@ def manage_form1a_events(request):
             ovccareassessments = OVCCareAssessment.objects.filter(event=ovccareevent.pk, is_void=False)
             for ovccareassessment in ovccareassessments:
                 assessments.append(translate(ovccareassessment.service) + '(' + translate(ovccareassessment.service_status) + ')')
-
+            print '-----------------------------------------------------------------------------------------------------------'
+            print assessments
             ## get CriticalEvents
             ovccriticalevents = OVCCareEAV.objects.filter(event=ovccareevent.pk, is_void=False)
             for ovccriticalevent in ovccriticalevents:
