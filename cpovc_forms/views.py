@@ -45,6 +45,7 @@ from cpovc_ovc.functions import get_ovcdetails
 from .functions import create_fields, create_form_fields, save_form1b
 
 
+
 def validate_serialnumber(user_id, subcounty, serial_number):
     try:
         serial_number_exists = OVCCaseRecord.objects.filter(
@@ -7068,12 +7069,35 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
     init_data = RegPerson.objects.filter(pk=id)
     check_fields = ['sex_id']
     vals = get_dict(field_name=check_fields)
+
     form = OVCF1AForm(initial={'person': id})
+    event_obj = OVCCareEvents.objects.get(pk=btn_event_pk)
+    ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
+    olmis_assessment_domain_list = get_list(
+        'olmis_assessment_domain_id', 'Please Select')
+
+    service_type_list=[]
+
+    for ovc_care_assessment in ovc_care_assessments:
+        domain_entry = {}
+        domain_full_name=[domain for domain in olmis_assessment_domain_list if domain[0] == ovc_care_assessment.domain]
+        domain_entry[ovc_care_assessment.domain]=domain_full_name[0][1]
+        service_type_list.append(domain_entry)
+    print '-------------------'
+    print service_type_list
+
+
+        # print domain_type_id_map
+        # print '-----------------'
+        # print ovc_care_assessment.domain
+        # print ovc_care_assessment.event.pk
+        # print ovc_care_assessment.service_status
+        # print ovc_care_assessment.service
+
     return render(request,
                   'forms/edit_form1a.html',
                   {'form': form, 'init_data': init_data,
-                   'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type})
-
+                   'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type, 'service_type_list': service_type_list})
 
 
 @login_required
@@ -7130,6 +7154,8 @@ def manage_form1a_events(request):
             event_type = None
             event_details = None
             services = []
+            event_keywords=[]
+            event_keyword_group=[]
             assessments = []
             prioritys = []
             critical_events = []
@@ -7139,8 +7165,8 @@ def manage_form1a_events(request):
             ovccareassessments = OVCCareAssessment.objects.filter(event=ovccareevent.pk, is_void=False)
             for ovccareassessment in ovccareassessments:
                 assessments.append(translate(ovccareassessment.service) + '(' + translate(ovccareassessment.service_status) + ')')
-            print '-----------------------------------------------------------------------------------------------------------'
-            print assessments
+                event_keywords.append(ovccareassessment.service)
+
             ## get CriticalEvents
             ovccriticalevents = OVCCareEAV.objects.filter(event=ovccareevent.pk, is_void=False)
             for ovccriticalevent in ovccriticalevents:
@@ -7162,7 +7188,8 @@ def manage_form1a_events(request):
                 event_details = ', '.join(services)
             elif(assessments): 
                 event_type = 'ASSESSMENT'
-                event_details = ', '.join(assessments)                
+                event_details = ', '.join(assessments)
+                event_keyword_group= ', '.join(event_keywords)
             elif(prioritys): 
                 event_type = 'PRIORITY'
                 event_details = ', '.join(prioritys)
@@ -7174,6 +7201,7 @@ def manage_form1a_events(request):
                             'event_pk': str(ovccareevent.pk),
                             'event_type': event_type,
                             'event_details': event_details,
+                            'event_keyword_group': event_keyword_group,
                             'event_date': event_date.strftime('%d-%b-%Y')
                         }) 
         print jsonForm1AEventsData

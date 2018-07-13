@@ -161,17 +161,11 @@
                                             <th width="5%"><h6><b>Actions</b></h6></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tr>
                                         <tr id="id_inputElements1">
                                         	<td></td>
                                         	<td width="15%">
-
-
-
                                                     {{ form.olmis_assessment_domain }}
-
-
-
                                         		<div id="olmis_assessment_domain_errormsg" style="display:none;">
                                                     <small><p class="dialog_paragraph">This value is required</p></span></small><span>
                                                 </div>
@@ -198,8 +192,24 @@
                                             	</b></h6>
                                             </td>
                                         </tr>
+                                        <tr><td colspan="4"><h4 style="text-align: center;">Service list</h4></td></tr>
+                                    {% for domain in service_type_list %}
+                                        {% for key, values in domain.items %}
+                                            <tr>
+
+                                                <td> <h6 class="td_style">#</h6> </td>
+                                                <td> <h6 class="td_style"> {{values}} </h6></td>
+                                                <td> <h6 class="td_style"> service list </h6> </td>
+                                                <td> <h6 class="td_style"> service status </h6> </td>
+                                                <td> <h6 class="dialog_paragraph"><a href='#'>Delete</a> </h6> </td>
+
+                                            </tr>
+
+                                         {% endfor %}
+                                    {% endfor %}
+                                    <tr><td colspan="4"><hr style="border-color: red;"></td></tr>
                                     </tbody>
-                                    {{ form.olmis_assessment_provided_list }}
+                                    {{ form.olmis_assessment_provided_list }} <!-- id is olmis_assessment_provided_list -->
                                 </table>
 							    <!-- end col-6 -->
 							</fieldset>
@@ -220,7 +230,9 @@
                                 <div class="form-group">
                                     <label class="control-label col-md-4 col-sm-4"></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="saveForm1A(1)">Submit Assessment</button>
+                                       <!-- <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="saveForm1A(1)">Update Assessment</button>-->
+                                        <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="alert('updatw entry')">Update Assessment</button>
+
                                         <a href="#" onClick="resetForm1A(1)" class="btn btn-white">Cancel</a>
                                     </div>
                                 </div>
@@ -523,8 +535,12 @@
 <script src="{% static 'js/bootstrap-table.min.js' %}"></script>
 <script src="{% static 'js/bootstrap-table-locale-all.min.js' %}"></script>
 <script>
+
+
+
 jQuery(document).ready(function()
 {
+
 	 //multi selects
     $('#olmis_assessment_domain, #olmis_assessment_coreservice, #olmis_assessment_coreservice_status, #olmis_domain, #olmis_service_provider, #olmis_service, #olmis_priority_service, #olmis_priority_domain, #olmis_priority_health, #olmis_priority_education, #olmis_priority_shelter, #olmis_priority_protection, #olmis_priority_pss, #olmis_priority_hes, #olmis_critical_event').multiselect({
         selectAllValue: 'multiselect-all',
@@ -553,6 +569,113 @@ jQuery(document).ready(function()
 	$('html,body').scrollTop(0);
 	FormWizardValidation.init();
 });
+
+//test();
+
+function test(){
+    console.log("Test this for us");
+
+
+		var OlmisAssessmentData = new Array();
+        var olmis_assessment_domain = 'ccdcd';
+        var olmis_assessment_coreservice = 'ccdcd';
+        var olmis_assessment_coreservice_status = 'ccdcd';
+        var csrftoken = $.cookie('csrftoken');
+        var values = {
+            'csrfmiddlewaretoken': csrftoken
+        };
+
+        // Validation and Ajax
+        if(olmis_assessment_domain)
+		{
+			if(olmis_assessment_coreservice)
+			{
+				if(olmis_assessment_coreservice_status)
+				{
+					// Find a <table> element with id="myTable":
+                    var table = $('#assessment_manager_table')[0];
+
+                    // Create an empty <tr> element with id and add it to the 1st position of the table:
+                    var rows_length = table.rows.length;
+                    var row = table.insertRow(rows_length);
+                    var index = rows_length - 2;
+                    row_id = 'rowid_' + index;
+                    row.id = row_id;
+                    var btnRemoveSvcId = 'btnRemoveSvc' + index;
+
+                    // Insert new cells (<td> elements) of the "new" <tr> element:
+                    var cell0 = row.insertCell(0);
+                    var cell1 = row.insertCell(1);
+                    var cell2 = row.insertCell(2);
+                    var cell3 = row.insertCell(3);
+                    var cell4 = row.insertCell(4);
+
+                    var holmis_assessment_domain= "<input id='holmis_assessment_domain' type='hidden' value='"+olmis_assessment_domain+"'>"
+                    var holmis_assessment_coreservice = "<input id='holmis_assessment_coreservice' type='hidden' value='"+olmis_assessment_coreservice+"'>"
+                    var holmis_assessment_coreservice_status = "<input id='holmis_assessment_coreservice_status' type='hidden' value='"+olmis_assessment_coreservice_status+"'>"
+                    var holmis_assessment_status= "<input id='holmis_assessment_status' type='hidden' value='new'>"
+
+                    cell0.innerHTML = '<h6 class="td_style">#</h6>';
+                    cell1.innerHTML = '<h6 class="td_style">' + olmis_assessment_domain + holmis_assessment_domain + '</h6>';
+                    cell2.innerHTML = '<h6 class="td_style">' + olmis_assessment_coreservice + holmis_assessment_coreservice + '</h6>';
+                    cell3.innerHTML = '<h6 class="td_style">' + olmis_assessment_coreservice_status + holmis_assessment_coreservice_status + '</h6>';
+                    cell4.innerHTML  = '<h6 class="dialog_paragraph">' + "<a id=" + btnRemoveSvcId + " class='btn btn-sm btn-link m-r-5 href='#'>Remove</a>" + '</h6>';
+
+                    // AddClick Event To Remove Button
+                    $("#" + btnRemoveSvcId + "").click(function(e)
+                    {
+                        RemoveRow(1, '', row_id);
+                    });
+
+                    // Reset Input Elements/Error Divs
+                    $("#olmis_assessment_domain").multiselect("clearSelection");
+                    $("#olmis_assessment_domain").multiselect("refresh");
+                    $("#olmis_assessment_coreservice").multiselect("clearSelection");
+                    $("#olmis_assessment_coreservice").multiselect("refresh");
+                    $("#olmis_assessment_coreservice_status").multiselect("clearSelection");
+                    $("#olmis_assessment_coreservice_status").multiselect("refresh");
+                    $('#sel_olmis_assessment_coreservice_status').html('');
+
+                    $('#assessment_manager_table tr').each(function(row, tr)
+                    {
+                        var olmis_assessment_domain = $(tr).find('input[id="holmis_assessment_domain"]').val();
+                        var olmis_assessment_coreservice = $(tr).find('input[id="holmis_assessment_coreservice"]').val();
+                        var olmis_assessment_coreservice_status = $(tr).find('input[id="holmis_assessment_coreservice_status"]').val();
+
+                        OlmisAssessmentData[row]= {
+                            "olmis_assessment_domain" : olmis_assessment_domain,
+                            "olmis_assessment_coreservice" : olmis_assessment_coreservice,
+                            "olmis_assessment_coreservice_status" : olmis_assessment_coreservice_status
+                            }
+
+                    });
+
+                    OlmisAssessmentData.shift(); //remove first row(headers stuff)
+                    OlmisAssessmentData.shift(); //remove second row(controls stuff)
+                    OlmisAssessmentData = JSON.stringify(OlmisAssessmentData);
+
+                    // Set olmis_assessment_provided_list
+                    $('#olmis_assessment_provided_list').val(OlmisAssessmentData);
+
+                    console.log(OlmisAssessmentData)
+				}
+				else
+				{
+					$("#olmis_assessment_coreservice_status_errormsg").css({ 'display': "block" });
+				}
+			}
+			else
+			{
+				$("#olmis_assessment_coreservice_errormsg").css({ 'display': "block" });
+			}
+		}
+		else
+		{
+			$("#olmis_assessment_domain_errormsg").css({ 'display': "block" });
+		}
+
+}
+
 
 arr_DSHC = new Array();
 arr_DPSS = new Array();
@@ -1030,6 +1153,9 @@ function getServices(x, domain)
 
             });
 }
+
+
+
 
 function AddRow(x)
 {
