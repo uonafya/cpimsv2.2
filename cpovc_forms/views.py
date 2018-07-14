@@ -7100,6 +7100,44 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                    'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type, 'service_type_list': service_type_list})
 
 
+@login_required(login_url='/')
+def delete_form1aa(request, id, btn_event_type, btn_event_pk):
+    init_data = RegPerson.objects.filter(pk=id)
+    check_fields = ['sex_id']
+    vals = get_dict(field_name=check_fields)
+    form = OVCF1AForm(initial={'person': id})
+    return render(request,
+                  'forms/form1a_events.html',
+                  {'form': form, 'init_data': init_data,
+                   'vals': vals})
+
+
+@login_required(login_url='/')
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def delete_form1a(request, id, btn_event_type, btn_event_pk):
+    jsonForm1AData = []
+    print btn_event_type
+    try:
+        event_id = uuid.UUID(btn_event_pk)
+        event = OVCCareEvents.objects.get(pk=event_id)
+        if btn_event_type =='ASSESSMENT':
+            OVCCareAssessment.objects.filter(event=event).delete()
+        elif btn_event_type =='PRIORITY':
+            OVCCarePriority.objects.filter(event=event).delete()
+        elif btn_event_type == 'CRITICAL EVENT':
+            OVCCareEAV.objects.filter(event=event).delete()
+        elif btn_event_type == 'SERVICES':
+            OVCCareServices.objects.filter(event=event).delete()
+        msg = 'Deleted successfully'
+    except Exception, e:
+        msg = 'An error occured : %s' %str(e)
+        print str(e)
+    jsonForm1AData.append({ 'msg': msg })
+    return JsonResponse(jsonForm1AData,
+                        content_type='application/json',
+                        safe=False)
+
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def view_form1a(request):
@@ -7114,32 +7152,6 @@ def view_form1a(request):
                         content_type='application/json',
                         safe=False)
 
-
-
-@login_required(login_url='/')
-def delete_form1a(request, id):
-    init_data = RegPerson.objects.filter(pk=id)
-    check_fields = ['sex_id']
-    vals = get_dict(field_name=check_fields)
-    form = OVCF1AForm(initial={'person': id})
-    return render(request,
-                  'forms/form1a_events.html',
-                  {'form': form, 'init_data': init_data,
-                   'vals': vals})
-
-@login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-def delete_form1aa(request):
-    jsonForm1AData = []
-    try:
-        msg = 'The page you are looking for is under construction!'        
-    except Exception, e:
-        msg = 'An error occured : %s' %str(e)
-        print str(e)
-    jsonForm1AData.append({ 'msg': msg })
-    return JsonResponse(jsonForm1AData,
-                        content_type='application/json',
-                        safe=False)
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)

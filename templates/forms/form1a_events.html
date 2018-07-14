@@ -91,6 +91,32 @@
     <p></p>
 </div>
 
+
+<!--<button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#delete-form1a-entry">Open Modal</button>-->
+
+  <!--Confirm form1a delete Modal -->
+
+  <div class="modal fade" id="delete-form1a-entry" style="margin-left: auto; margin-right: auto; width: 50%;" role="dialog">
+    <div class="modal-dialog modal-sm">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Delete Entry</h4>
+        </div>
+        <div class="modal-body">
+          <p>Delete selected entry?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" onclick="deleteForm1aEntry()" data-dismiss="modal">Yes</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 <!-- begin row -->
 <div id='case_details' class="row">
 
@@ -548,53 +574,59 @@ function loadForm1aEvents()
                         var event_details = val.event_details;
                         var event_date = val.event_date;
 
-                        var btnView = 'btnView' + i;
-                        var btnEdit = 'btnEdit' + i;
-                        var btnDelete = 'btnDelete' + i;
-                        var tableRowId = 'tableRowId' + i;
+                        if (event_details !==null){
 
-                        //Actions Item
-                        var viewItem = '<button id=' + btnView + ' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-binoculars"></i></button>';
-                        var editItem = '<button id=' + btnEdit + ' data-event_type='+event_type+' data-event_pk='+event_pk+' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-pencil"></i></button>';
-                        var deleteItem = '<button id=' + btnDelete + ' type="submit" class="btn  btn-sm btn-danger m-r-5"><i class="fa fa-trash"></i></button>';
+                            var btnView = 'btnView' + i;
+                            var btnEdit = 'btnEdit' + i;
+                            var btnDelete = 'btnDelete' + i;
+                            var tableRowId = 'tableRowId' + i;
 
-                        // Append to rows to table rows
-                        $("#f1a_events_data_table tbody").append('<tr id=' + tableRowId + '>' + 
-                            '<td width="25%"><h6>' + event_type + '</h6></td>' +
-                            '<td width="25%"><h6>' + event_details + '</h6></td>' +  
-                            '<td width="25%"><h6>' + event_date + '</h6></td>' +
-                            '<td>' +
-                            /*' + viewItem + '' + **/
-                            '' + editItem + '' +
-                            '' + deleteItem + '' +
-                            '</td></tr>');
+                            //Actions Item
+                            var viewItem = '<button id=' + btnView + ' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-binoculars"></i></button>';
+                            var editItem = '<button id=' + btnEdit + ' data-event_type='+event_type+' data-event_pk='+event_pk+' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-pencil"></i></button>';
+                            var deleteItem = '<button id=' + btnDelete + ' data-event_type='+event_type+' data-event_pk='+event_pk+' type="submit" class="btn  btn-sm btn-danger m-r-5"><i class="fa fa-trash"></i></button>';
 
-                        // Add Click Event To Buttons
-                        $("#" + btnView + "").click(function(e)
-                        {
-                        });
+                            // Append to rows to table rows
+                            $("#f1a_events_data_table tbody").append('<tr id=' + tableRowId + '>' +
+                                '<td width="25%"><h6>' + event_type + '</h6></td>' +
+                                '<td width="25%"><h6>' + event_details + '</h6></td>' +
+                                '<td width="25%"><h6>' + event_date + '</h6></td>' +
+                                '<td>' +
+                                /*' + viewItem + '' + **/
+                                '' + editItem + '' +
+                                '' + deleteItem + '' +
+                                '</td></tr>');
 
-                        $("#" + btnEdit + "").click(function(e)
-                        {   var personId=$('#person').val();
-                            var btn_event_type=$(this).attr("data-event_type");
-                            var btn_event_pk=$(this).attr("data-event_pk");
-                            //alert(btn_event_type);
-                            //alert(btn_event_pk);
+                            // Add Click Event To Buttons
+                            $("#" + btnView + "").click(function(e)
+                            {
+                            });
 
-                            //alert(url);
-                            var url = "{% url 'edit_form1a' id=1234 btn_event_type=2345 btn_event_pk=3456 %}".replace(/1234/, personId.toString()).replace(/2345/, btn_event_type.toString()).replace(/3456/, btn_event_pk.toString());
+                            $("#" + btnEdit + "").click(function(e)
+                            {   var personId=$('#person').val();
+                                var btn_event_type=$(this).attr("data-event_type");
+                                var btn_event_pk=$(this).attr("data-event_pk");
 
-                            window.open(url,"_self");
-                        });
+                                var url = "{% url 'edit_form1a' id=1234 btn_event_type=2345 btn_event_pk=3456 %}".replace(/1234/, personId.toString()).replace(/2345/, btn_event_type.toString()).replace(/3456/, btn_event_pk.toString());
 
-
-                        $("#" + btnDelete + "").click(function(e)
-                        {   var personId=$('#person').val();
-
-                            window.open(url,"_self");
-                        });
+                                window.open(url,"_self");
+                            });
 
 
+                            $("#" + btnDelete + "").click(function(e)
+                            {   var personId=$('#person').val();
+                                var btn_event_type=$(this).attr("data-event_type");
+                                var btn_event_pk=$(this).attr("data-event_pk");
+
+                                var url = "{% url 'delete_form1a' id=1234 btn_event_type=2345 btn_event_pk=3456 %}".replace(/1234/, personId.toString()).replace(/2345/, btn_event_type.toString()).replace(/3456/, btn_event_pk.toString());
+                                window.form1aUrlToDelete=url;
+                                window.eventTypeToDelete=btn_event_type.toString();
+                                $("#delete-form1a-entry").modal();
+
+                                //window.open(url,"_self");
+                            });
+
+                        }
                     });
                     
                 },
@@ -1773,5 +1805,26 @@ $("#olmis_priority_hes").change(function(event)
 { 
 	displayVals(1, 'olmis_priority_hes');
 });
+
+function deleteForm1aEntry(){
+    $('#delete-form1a-entry').modal('hide');
+
+    $.ajax({
+                url: window.form1aUrlToDelete,
+                dataType: 'json',
+                method: 'GET',
+                success: function(result)
+                {
+                    //$(".alert").show();
+                    //$('.invalid-form-message').html('Error loading Form1A events - ' + error);
+                    location.reload();
+                },
+                error: function(xhr, status, error){
+                    $(".alert").show();
+                    $('.invalid-form-message').html('Error loading Form1A events - ' + error);
+                }
+            });
+}
+
 </script>	
 {% endblock %}

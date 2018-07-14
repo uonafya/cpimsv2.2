@@ -196,7 +196,7 @@ urlpatterns = patterns(
         'edit_form1a', name='edit_form1a'),
     url(r'^form1a/view/$',
         'view_form1a', name='view_form1a'),
-    url(r'^form1a/delete/(?P<id>\d+)$',
+    url(r'^form1a/delete/(?P<id>\d+)/(?P<btn_event_type>\w+)/(?P<btn_event_pk>.+)/$',
         'delete_form1a', name='delete_form1a'),
     url(r'^form1a/manage/$',
         'manage_form1a_events', name='manage_form1a_events'),
