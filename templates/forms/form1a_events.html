@@ -583,7 +583,7 @@ function loadForm1aEvents()
 
                             //Actions Item
                             var viewItem = '<button id=' + btnView + ' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-binoculars"></i></button>';
-                            var editItem = '<button id=' + btnEdit + ' data-event_type='+event_type+' data-event_pk='+event_pk+' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-pencil"></i></button>';
+                            var editItem = '<button id=' + btnEdit + ' data-event_type='+event_type+' data-event_pk='+event_pk+' data-core_service="" data-core_service_status="" type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-pencil"></i></button>';
                             var deleteItem = '<button id=' + btnDelete + ' data-event_type='+event_type+' data-event_pk='+event_pk+' type="submit" class="btn  btn-sm btn-danger m-r-5"><i class="fa fa-trash"></i></button>';
 
                             // Append to rows to table rows
@@ -1817,11 +1817,15 @@ function deleteForm1aEntry(){
                 {
                     //$(".alert").show();
                     //$('.invalid-form-message').html('Error loading Form1A events - ' + error);
+
+                    <!--$('#success_message').css({'display': 'block'});-->
+                    <!--$('#success_message p').html(result.msg);-->
+
                     location.reload();
                 },
                 error: function(xhr, status, error){
-                    $(".alert").show();
-                    $('.invalid-form-message').html('Error loading Form1A events - ' + error);
+                    <!--$(".alert").show();-->
+                    <!--$('.invalid-form-message').html('Error loading Form1A events - ' + error);-->
                 }
             });
 }
