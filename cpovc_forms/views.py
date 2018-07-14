@@ -7064,6 +7064,7 @@ def save_form1a(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def update_form1a(request):
+    jsonResponse = []
     try:
         if request.method == 'POST':
             # get CBO
@@ -7245,7 +7246,9 @@ def update_form1a(request):
             msg = 'Save Successful'
             jsonResponse.append({'msg': msg})
     except Exception, e:
+        print e
         msg = 'Save Error: (%s)' % (str(e))
+        print msg
     jsonResponse.append({'msg': msg})
     return JsonResponse(jsonResponse, content_type='application/json', safe=False)
 
@@ -7290,14 +7293,7 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
         service_type_list.append(domain_entry)
 
         form = OVCF1AForm(initial={'person': id})
-
-        print '================='
-        print type(date_of_event_edit)
-        print date_of_event_edit
-        #date_of_event_edit='{:%d-%b-%Y}'.format(date_of_event_edit)
-        #date_of_event_edit=date_of_event_edit.strftime('%d-%b-%Y')
-        #datetime.datetime.strptime("2017-07-16", '%d-%m-%y')
-
+        date_of_event_edit=str(date_of_event_edit)
 
     return render(request,
                   'forms/edit_form1a.html',

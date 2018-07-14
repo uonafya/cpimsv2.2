@@ -1528,7 +1528,7 @@ $("#olmis_assessment_coreservice_status").change(function(event)
 	$("#olmis_assessment_coreservice_status_errormsg").css({ 'display': "none" });
 });
 
-$('#date_of_assessment').datepicker({ format: 'dd-M-yyyy' });
+$('#date_of_assessment').datepicker({ format: 'yyyy-m-dd' });
 $('#date_of_assessment').datepicker().on('change.dp', function(e) {
     $("#date_errormsg0").css({ 'display': "none" });
 });
