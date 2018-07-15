@@ -277,8 +277,9 @@
                                 <div class="form-group">
                                     <label class="control-label col-md-4 col-sm-4"></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="saveForm1A(2)">Submit Critical Event(s)</button>
-                                        <a href="#" onClick="resetForm1A(2)" class="btn btn-white">Cancel</a>
+                                        <!--<button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="saveForm1A(2)">Submit Critical Event(s)</button>-->
+                                        <button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="updateForm1A(2)">Update Critical Event(s)</button>
+                                        <a href="#" onClick="#" class="btn btn-white">Cancel</a>
                                     </div>
                                 </div>
                             </div>
@@ -517,6 +518,8 @@
     <!-- end col-12 -->
     <input type="hidden" id="event_date_id" value="{{date_of_event_edit}}"/>
     <input type="hidden" id="event_pk" value="{{event_pk}}"/>
+    <input type="hidden" id="critical_events_lst" value="{{critical_events_lst}}"/>
+
 </div>
 <!-- end row -->
 
@@ -564,6 +567,7 @@ jQuery(document).ready(function()
 
 	$('html,body').scrollTop(0);
 	FormWizardValidation.init();
+	setInitialCriticalEvents();
 });
 
 
@@ -723,6 +727,62 @@ function updateForm1A(x)
             $('#success_message').css({'display': 'none'});
             $(".alert-danger").show();
             $('.invalid-form-message').html('Please provide required assessment response(s).');
+            return false;
+        }
+    }
+    // Critical Events
+    if(x == 2){
+        values['args'] = 2;
+        error_msg='Please provide required critical event(s)';
+        error_div = '#error_cevts';
+
+        var date_of_cevent = $('#date_of_cevent').val();
+        var olmis_critical_event = $('#olmis_critical_event').val();
+        if(olmis_critical_event)
+        {
+            values['olmis_critical_event'] = olmis_critical_event.toString();
+
+            if(date_of_cevent)
+            {
+                values['date_of_cevent'] = date_of_cevent;
+                $.ajax({
+                    url: '{% url 'update_form1a' %}',
+                    dataType: 'json',
+                    method: 'POST',
+                    data: values,
+                    success: function(result)
+                    {
+                        $.each(result, function(i, val)
+                        {
+                            $(".alert-danger").hide();
+                            $('#success_message').css({'display': 'block'});
+                            $('#success_message p').html(val.msg);
+                        });
+                        //loadForm1aEvents();
+                        //resetForm1A(2);
+                    },
+                    error: function(xhr, status, error){
+                        $(".alert-danger").hide();
+                        $("" + error_div + "").addClass( "alert alert-danger fade in" );
+                        $("" + error_div + "").html(msg + error)
+                    }
+                });
+            }
+            else
+            {
+                $('#success_message').css({'display': 'none'});
+                $(".alert-danger").show();
+                $('.invalid-form-message').html('Please provide required date of event.');
+                $('#date_errormsg1').css({'display': 'block'});
+                return false;
+            }
+        }
+        else
+        {
+            $('#success_message').css({'display': 'none'});
+            $(".alert-danger").show();
+            $('.invalid-form-message').html('Please provide required critical event(s).');
+            $('#olmis_critical_event_errormsg').css({'display': 'block'});
             return false;
         }
     }
@@ -1427,6 +1487,32 @@ function RemoveRow(index, uuid, tr_id)
     }
 }
 
+
+function setInitialCriticalEvents(){
+  //  var values="Test,Prof,Off";
+  //  $.each(values.split(","), function(i,e){
+  //      $("#olmis_critical_event option[value='" + e + "']").prop("selected", true);
+  //  });
+
+
+    $("#olmis_critical_event").multiselect({
+       selectedText: "# of # selected"
+    });
+    var hidden_critical_value = $("#critical_events_lst").val();
+
+    var selectedOptions = hidden_critical_value.split(",");
+   // alert(selectedOptions);
+    for(var i in selectedOptions) {
+        var optionVal = selectedOptions[i];
+        $("#olmis_critical_event").find("option[value="+optionVal+"]").prop("selected", "selected");
+    }
+    $("#olmis_critical_event").multiselect('refresh');
+
+
+
+//    $("#olmis_critical_event").trigger( "change" );
+}
+
 function displayVals(x, value)
 {
 	var selections = [];
@@ -1439,6 +1525,7 @@ function displayVals(x, value)
 	       if ($this.length)
 	       {
 	            var selText = $this.text();
+
 	            selections.push(selText);
 	       }
 	    });
@@ -1535,7 +1622,7 @@ $('#date_of_assessment').datepicker().on('change.dp', function(e) {
 
 
 $("#olmis_critical_event").change(function(event)
-{
+{  
     displayVals(1, 'olmis_critical_event');
 });
 

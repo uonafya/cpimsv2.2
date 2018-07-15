@@ -7077,47 +7077,31 @@ def update_form1a(request):
             args = int(request.POST.get('args'))
             person = request.POST.get('person')
             print "Step one debug"
+            event_obj = OVCCareEvents.objects.get(pk=request.POST.get('event_pk'))
             """Save Assessment"""
             if args == 1:
                 print "Step two debug"
                 date_of_assessment = request.POST.get('date_of_assessment')
                 if date_of_assessment:
                     date_of_assessment = convert_date(date_of_assessment)
-                    print "Step three debug"
                 # update F1AEvent
-                #event_counter = OVCCareEvents.objects.filter(event_type_id=event_type_id, person=person, is_void=False).count()
-                event_obj = OVCCareEvents.objects.get(pk=request.POST.get('event_pk'))
+
                 ovc_care_assessment = OVCCareAssessment.objects.filter(event=event_obj)[:1]
-
-                # ovccareevent = OVCCareEvents(
-                #     event_type_id=event_type_id,
-                #     event_counter=event_counter,
-                #     event_score=0,
-                #     date_of_event=date_of_assessment,
-                #     created_by=request.user.id,
-                #     person=RegPerson.objects.get(pk=int(person))
-                # )
-                # ovccareevent.save()
-                # new_pk =9
-
                 # F1A Assessment
-
                 olmis_assessment_provided_list = request.POST.get('olmis_assessment_provided_list')
                 if olmis_assessment_provided_list:
-                    print "Step four debug"
+
                     olmis_assessment_data = json.loads(olmis_assessment_provided_list)
 
                     for assessment_data in olmis_assessment_data:
                         if len(assessment_data) is not 0:
-
-                            print "Step five debug"
                             #service_grouping_id = new_guid_32()
                             olmis_assessment_domain = assessment_data['olmis_assessment_domain']
                             olmis_assessment_service = assessment_data['olmis_assessment_coreservice']
                             olmis_assessment_service_status = assessment_data['olmis_assessment_coreservice_status']
                             services_status = olmis_assessment_service_status.split(',')
                             for service_status in services_status:
-                                print "Step six debug"
+
                                 OVCCareAssessment(
                                     domain=olmis_assessment_domain,
                                     service=olmis_assessment_service,
@@ -7125,44 +7109,30 @@ def update_form1a(request):
                                     event=event_obj,
                                     service_grouping_id=ovc_care_assessment[0].service_grouping_id
                                     ).save()
-                                print "Step seven debug"
 
             if args == 2:
                 date_of_cevent = request.POST.get('date_of_cevent')
                 if date_of_cevent:
                     date_of_cevent = convert_date(date_of_cevent)
 
-                # Save F1AEvent
-                event_counter = OVCCareEvents.objects.filter(event_type_id=event_type_id, person=person, is_void=False).count()
-                ovccareevent = OVCCareEvents(
-                    event_type_id=event_type_id,
-                    event_counter=event_counter,
-                    event_score=0,
-                    date_of_event=date_of_cevent,
-                    created_by=request.user.id,
-                    person=RegPerson.objects.get(pk=int(person))
-                )
-                ovccareevent.save()
-                new_pk = ovccareevent.pk
-
                 # Critical Events [CEVT]
                 my_kvals = []
-                olmis_critical_event = request.POST.getlist('olmis_critical_event') # DHES
+                olmis_critical_event = request.POST.getlist('olmis_critical_event')  # DHES
                 for i, cevts in enumerate(olmis_critical_event):
-                        cevts = cevts.split(',')
-                        for cevt in cevts:
-                            my_kvals.append({ "entity": "CEVT", "value": cevt })
-
+                    cevts = cevts.split(',')
+                    for cevt in cevts:
+                        my_kvals.append({"entity": "CEVT", "value": cevt})
+                OVCCareEAV.objects.filter(event=event_obj).delete()
                 for kvals in my_kvals:
                     key = kvals["entity"]
                     value = kvals["value"]
                     attribute = "FSAM"
                     OVCCareEAV(
-                        entity = key,
-                        attribute = attribute,
-                        value = value,
-                        event = OVCCareEvents.objects.get(pk=new_pk)
-                        ).save()
+                        entity=key,
+                        attribute=attribute,
+                        value=value,
+                        event=event_obj
+                    ).save()
 
             if args == 3:
                 date_of_priority = request.POST.get('date_of_priority')
@@ -7170,54 +7140,33 @@ def update_form1a(request):
                     date_of_priority = convert_date(date_of_priority)
 
                 # Save F1AEvent
-                event_counter = OVCCareEvents.objects.filter(event_type_id=event_type_id, person=person, is_void=False).count()
-                ovccareevent = OVCCareEvents(
-                    event_type_id=event_type_id,
-                    event_counter=event_counter,
-                    event_score=0,
-                    date_of_event=date_of_priority,
-                    created_by=request.user.id,
-                    person=RegPerson.objects.get(pk=int(person))
-                )
-                ovccareevent.save()
-                new_pk = ovccareevent.pk
-
+                event_obj = OVCCareEvents.objects.get(pk=request.POST.get('event_pk'))
+                ovc_care_priority = OVCCarePriority.objects.filter(event=event_obj)[:1]
                 # Priority Needs
                 olmis_priority_service_provided_list = request.POST.get(
                     'olmis_priority_service_provided_list')
                 if olmis_priority_service_provided_list:
                     olmis_priority_data = json.loads(olmis_priority_service_provided_list)
                     for priority_data in olmis_priority_data:
-                        service_grouping_id = new_guid_32()
-                        olmis_priority_domain = priority_data['olmis_priority_domain']
-                        olmis_priority_service = priority_data['olmis_priority_service']
-                        services = olmis_priority_service.split(',')
-                        for service in services:
-                            OVCCarePriority(
-                                domain =olmis_priority_domain,
-                                service = service,
-                                event = OVCCareEvents.objects.get(pk=new_pk),
-                                service_grouping_id = service_grouping_id
-                                ).save()
+                        if len(priority_data) is not 0:
+                            olmis_priority_domain = priority_data['olmis_priority_domain']
+                            olmis_priority_service = priority_data['olmis_priority_service']
+                            services = olmis_priority_service.split(',')
+                            for service in services:
+                                OVCCarePriority(
+                                    domain =olmis_priority_domain,
+                                    service = service,
+                                    event = OVCCareEvents.objects.get(pk=event_obj),
+                                    service_grouping_id = ovc_care_priority[0].service_grouping_id
+                                    ).save()
 
             if args == 4:
                 date_of_service = request.POST.get('date_of_service')
                 if date_of_service:
                     date_of_service = convert_date(date_of_service)
 
-                # Save F1AEvent
-                event_counter = OVCCareEvents.objects.filter(event_type_id=event_type_id, person=person, is_void=False).count()
-                ovccareevent = OVCCareEvents(
-                    event_type_id=event_type_id,
-                    event_counter=event_counter,
-                    event_score=0,
-                    date_of_event=date_of_service,
-                    created_by=request.user.id,
-                    person=RegPerson.objects.get(pk=int(person))
-                )
-                ovccareevent.save()
-                new_pk = ovccareevent.pk
-
+                event_obj = OVCCareEvents.objects.get(pk=request.POST.get('event_pk'))
+                ovc_care_priority = OVCCareServices.objects.filter(event=event_obj)[:1]
                 # Support/Services
                 olmis_service_provided_list = request.POST.get('olmis_service_provided_list')
                 if olmis_service_provided_list:
@@ -7239,8 +7188,8 @@ def update_form1a(request):
                                 service_provider = org_unit,
                                 # place_of_service = olmis_place_of_service,
                                 date_of_encounter_event = olmis_service_date,
-                                event = OVCCareEvents.objects.get(pk=new_pk),
-                                service_grouping_id = service_grouping_id
+                                event = OVCCareEvents.objects.get(pk=event_obj),
+                                service_grouping_id = ovc_care_priority.service_grouping_id
                             ).save()
 
             msg = 'Save Successful'
@@ -7260,45 +7209,88 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
     init_data = RegPerson.objects.filter(pk=id)
     check_fields = ['sex_id']
     vals = get_dict(field_name=check_fields)
-
     form = OVCF1AForm(initial={'person': id})
     event_obj = OVCCareEvents.objects.get(pk=btn_event_pk)
-    ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
-    olmis_assessment_domain_list = get_list(
-        'olmis_assessment_domain_id', 'Please Select')
-    date_of_event_edit=event_obj.date_of_event
-    service_type_list=[]
+    print btn_event_type
+    if btn_event_type == 'ASSESSMENT':
+        ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
+        olmis_assessment_domain_list = get_list(
+            'olmis_assessment_domain_id', 'Please Select')
+        date_of_event_edit = event_obj.date_of_event
+        service_type_list = []
+        for ovc_care_assessment in ovc_care_assessments:
+            domain_entry = {}
+            assessment_entry = []
+            domain_full_name = [domain for domain in olmis_assessment_domain_list if
+                                domain[0] == ovc_care_assessment.domain]
 
-    ## get Assessment
-    # ovccareassessments = OVCCareAssessment.objects.filter(event=ovccareevent.pk, is_void=False)
-    # for ovccareassessment in ovccareassessments:
-    #     assessments.append(
-    #         translate(ovccareassessment.service) + '(' + translate(ovccareassessment.service_status) + ')')
-    #     event_keywords.append(ovccareassessment.service)
+            ovc_care_assessment.assessment_id
+            ovc_care_assessment.service
+            ovc_care_assessment.service_status
 
+            assessment_entry.append(domain_full_name[0][1])
+            assessment_entry.append(translate(ovc_care_assessment.service))
+            assessment_entry.append(translate(ovc_care_assessment.service_status))
+            domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
+            service_type_list.append(domain_entry)
 
-    for ovc_care_assessment in ovc_care_assessments:
-        domain_entry = {}
-        assessment_entry=[]
-        domain_full_name=[domain for domain in olmis_assessment_domain_list if domain[0] == ovc_care_assessment.domain]
+            form = OVCF1AForm(initial={'person': id})
+            date_of_event_edit = str(date_of_event_edit)
 
-        ovc_care_assessment.assessment_id
-        ovc_care_assessment.service
-        ovc_care_assessment.service_status
+        return render(request,
+                      'forms/edit_form1a.html',
+                      {'form': form, 'init_data': init_data,
+                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                       'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
 
-        assessment_entry.append(domain_full_name[0][1])
-        assessment_entry.append(translate(ovc_care_assessment.service))
-        assessment_entry.append(translate(ovc_care_assessment.service_status))
-        domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
-        service_type_list.append(domain_entry)
+    elif btn_event_type == 'CRITICAL':
+        print '---------------- stop point 1'
+        critical_events=OVCCareEAV.objects.filter(event=event_obj)
+        critical_events_lst=''
+        loop_count=0
+        for  critical_event in critical_events:
+            if loop_count==0:
+                critical_events_lst=critical_events_lst+str(critical_event.value)
+                loop_count=loop_count+1
+            else:
+                critical_events_lst = critical_events_lst +','+ str(critical_event.value)
+        date_of_event_edit = event_obj.date_of_event
+        return render(request,
+                      'forms/edit_form1a.html',
+                      {'form': form, 'init_data': init_data,
+                        'critical_events_lst':critical_events_lst, 'vals': vals, 'event_pk': btn_event_pk,
+                       'event_type': btn_event_type,'date_of_event_edit': date_of_event_edit})
 
-        form = OVCF1AForm(initial={'person': id})
-        date_of_event_edit=str(date_of_event_edit)
+    else:
+        ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
+        olmis_assessment_domain_list = get_list(
+            'olmis_assessment_domain_id', 'Please Select')
+        date_of_event_edit = event_obj.date_of_event
+        service_type_list = []
+        for ovc_care_assessment in ovc_care_assessments:
+            domain_entry = {}
+            assessment_entry = []
+            domain_full_name = [domain for domain in olmis_assessment_domain_list if
+                                domain[0] == ovc_care_assessment.domain]
 
-    return render(request,
-                  'forms/edit_form1a.html',
-                  {'form': form, 'init_data': init_data,
-                   'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type, 'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
+            ovc_care_assessment.assessment_id
+            ovc_care_assessment.service
+            ovc_care_assessment.service_status
+
+            assessment_entry.append(domain_full_name[0][1])
+            assessment_entry.append(translate(ovc_care_assessment.service))
+            assessment_entry.append(translate(ovc_care_assessment.service_status))
+            domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
+            service_type_list.append(domain_entry)
+
+            form = OVCF1AForm(initial={'person': id})
+            date_of_event_edit = str(date_of_event_edit)
+
+        return render(request,
+                      'forms/edit_form1a.html',
+                      {'form': form, 'init_data': init_data,
+                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                       'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
 
 
 @login_required(login_url='/')
@@ -7341,7 +7333,7 @@ def delete_form1a(request, id, btn_event_type, btn_event_pk):
                     OVCCareAssessment.objects.filter(event=event).delete()
                 elif btn_event_type =='PRIORITY':
                     OVCCarePriority.objects.filter(event=event).delete()
-                elif btn_event_type == 'CRITICAL EVENT':
+                elif 'CRITICAL' in btn_event_type:
                     OVCCareEAV.objects.filter(event=event).delete()
                 elif btn_event_type == 'SERVICES':
                     OVCCareServices.objects.filter(event=event).delete()
