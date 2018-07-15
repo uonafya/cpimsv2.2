@@ -29,7 +29,7 @@ from cpovc_ovc.models import OVCRegistration, OVCHHMembers, OVCHealth, OVCHouseH
 from cpovc_main.functions import (
     get_list_of_org_units, get_dict, get_vgeo_list, get_vorg_list, get_persons_list, get_list_of_persons, get_list, form_id_generator,
     case_event_id_generator, convert_date, new_guid_32, beneficiary_id_generator, translate_geo, translate,
-    translate_case, translate_reverse, translate_reverse_org, translate_school)
+    translate_case, translate_reverse, translate_reverse_org, translate_school, get_days_difference)
 from cpovc_forms.functions import (save_audit_trail)
 from cpovc_main.country import (COUNTRIES)
 from cpovc_registry.models import (
@@ -7214,139 +7214,130 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
     vals = get_dict(field_name=check_fields)
     form = OVCF1AForm(initial={'person': id})
     event_obj = OVCCareEvents.objects.get(pk=btn_event_pk)
-    print btn_event_type
-    if btn_event_type == 'ASSESSMENT':
-        ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
-        olmis_assessment_domain_list = get_list(
-            'olmis_assessment_domain_id', 'Please Select')
-        date_of_event_edit = event_obj.date_of_event
-        service_type_list = []
-        for ovc_care_assessment in ovc_care_assessments:
-            domain_entry = {}
-            assessment_entry = []
-            domain_full_name = [domain for domain in olmis_assessment_domain_list if
-                                domain[0] == ovc_care_assessment.domain]
+    event_id = uuid.UUID(btn_event_pk)
+    d_event = OVCCareEvents.objects.filter(pk=event_id)[0].timestamp_created
+    delta = get_days_difference(d_event)
+    print "stop 1"
+    print delta
 
-            ovc_care_assessment.assessment_id
-            ovc_care_assessment.service
-            ovc_care_assessment.service_status
+    print 'check delta'
+    print delta
+    if delta < 30:
+        if btn_event_type == 'ASSESSMENT':
+            ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
 
-            assessment_entry.append(domain_full_name[0][1])
-            assessment_entry.append(translate(ovc_care_assessment.service))
-            assessment_entry.append(translate(ovc_care_assessment.service_status))
-            domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
-            service_type_list.append(domain_entry)
+            service_type_list = []
+            olmis_assessment_domain_list = get_list(
+                'olmis_assessment_domain_id', 'Please Select')
+            date_of_event_edit= event_obj.date_of_event
 
-            form = OVCF1AForm(initial={'person': id})
-            date_of_event_edit = str(date_of_event_edit)
+            for ovc_care_assessment in ovc_care_assessments:
+                domain_entry = {}
+                assessment_entry = []
+                domain_full_name = [domain for domain in olmis_assessment_domain_list if
+                                    domain[0] == ovc_care_assessment.domain]
 
-        return render(request,
-                      'forms/edit_form1a.html',
-                      {'form': form, 'init_data': init_data,
-                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
-                       'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
+                assessment_entry.append(domain_full_name[0][1])
+                assessment_entry.append(translate(ovc_care_assessment.service))
+                assessment_entry.append(translate(ovc_care_assessment.service_status))
+                domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
+                service_type_list.append(domain_entry)
 
-    elif btn_event_type == 'CRITICAL':
-        print '---------------- stop point 1'
-        critical_events=OVCCareEAV.objects.filter(event=event_obj)
-        critical_events_lst=''
-        loop_count=0
-        for  critical_event in critical_events:
-            if loop_count==0:
-                critical_events_lst=critical_events_lst+str(critical_event.value)
-                loop_count=loop_count+1
-            else:
-                critical_events_lst = critical_events_lst +','+ str(critical_event.value)
-        date_of_event_edit = event_obj.date_of_event
-        return render(request,
-                      'forms/edit_form1a.html',
-                      {'form': form, 'init_data': init_data,
-                        'critical_events_lst':critical_events_lst, 'vals': vals, 'event_pk': btn_event_pk,
-                       'event_type': btn_event_type,'date_of_event_edit': date_of_event_edit})
+                form = OVCF1AForm(initial={'person': id})
+                date_of_event_edit = str(date_of_event_edit)
+                print service_type_list
+            return render(request,
+                          'forms/edit_form1a.html',
+                          {'form': form, 'init_data': init_data,
+                           'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                           'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit })
 
-    elif btn_event_type == 'SERVICES':
-        date_of_event_edit = event_obj.date_of_event
-        services_list=[]
-        ## get Services
-        ovccareservices = OVCCareServices.objects.filter(event=event_obj, is_void=False)
-        for ovccareservice in ovccareservices:
-            service = {}
-            service['id']=ovccareservice.service_id
-            service['detail']=translate(ovccareservice.service_provided)
-            service['date']=(str(ovccareservice.date_of_encounter_event))
-            services_list.append(service)
-        return render(request,
-                      'forms/edit_form1a.html',
-                      {'form': form, 'init_data': init_data,
-                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
-                       'services_list': services_list, 'date_of_event_edit': date_of_event_edit})
 
+        elif btn_event_type == 'CRITICAL':
+            print '---------------- stop point 1'
+            critical_events=OVCCareEAV.objects.filter(event=event_obj)
+            critical_events_lst=''
+            loop_count=0
+            for  critical_event in critical_events:
+                if loop_count==0:
+                    critical_events_lst=critical_events_lst+str(critical_event.value)
+                    loop_count=loop_count+1
+                else:
+                    critical_events_lst = critical_events_lst +','+ str(critical_event.value)
+            date_of_event_edit = event_obj.date_of_event
+            return render(request,
+                          'forms/edit_form1a.html',
+                          {'form': form, 'init_data': init_data,
+                            'critical_events_lst':critical_events_lst, 'vals': vals, 'event_pk': btn_event_pk,
+                           'event_type': btn_event_type,'date_of_event_edit': date_of_event_edit})
+
+        elif btn_event_type == 'SERVICES':
+            date_of_event_edit = event_obj.date_of_event
+            services_list=[]
+            ## get Services
+            ovccareservices = OVCCareServices.objects.filter(event=event_obj, is_void=False)
+            for ovccareservice in ovccareservices:
+                service = {}
+                service['id']=ovccareservice.service_id
+                service['detail']=translate(ovccareservice.service_provided)
+                service['date']=(str(ovccareservice.date_of_encounter_event))
+                services_list.append(service)
+            return render(request,
+                          'forms/edit_form1a.html',
+                          {'form': form, 'init_data': init_data,
+                           'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                           'services_list': services_list, 'date_of_event_edit': date_of_event_edit})
+
+        else:
+            ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
+            olmis_assessment_domain_list = get_list(
+                'olmis_assessment_domain_id', 'Please Select')
+            date_of_event_edit = event_obj.date_of_event
+            service_type_list = []
+            for ovc_care_assessment in ovc_care_assessments:
+                domain_entry = {}
+                assessment_entry = []
+                domain_full_name = [domain for domain in olmis_assessment_domain_list if
+                                    domain[0] == ovc_care_assessment.domain]
+
+                ovc_care_assessment.assessment_id
+                ovc_care_assessment.service
+                ovc_care_assessment.service_status
+
+                assessment_entry.append(domain_full_name[0][1])
+                assessment_entry.append(translate(ovc_care_assessment.service))
+                assessment_entry.append(translate(ovc_care_assessment.service_status))
+                domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
+                service_type_list.append(domain_entry)
+
+                form = OVCF1AForm(initial={'person': id})
+                date_of_event_edit = str(date_of_event_edit)
+
+            return render(request,
+                          'forms/edit_form1a.html',
+                          {'form': form, 'init_data': init_data,
+                           'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                           'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
     else:
-        ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
-        olmis_assessment_domain_list = get_list(
-            'olmis_assessment_domain_id', 'Please Select')
-        date_of_event_edit = event_obj.date_of_event
-        service_type_list = []
-        for ovc_care_assessment in ovc_care_assessments:
-            domain_entry = {}
-            assessment_entry = []
-            domain_full_name = [domain for domain in olmis_assessment_domain_list if
-                                domain[0] == ovc_care_assessment.domain]
-
-            ovc_care_assessment.assessment_id
-            ovc_care_assessment.service
-            ovc_care_assessment.service_status
-
-            assessment_entry.append(domain_full_name[0][1])
-            assessment_entry.append(translate(ovc_care_assessment.service))
-            assessment_entry.append(translate(ovc_care_assessment.service_status))
-            domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
-            service_type_list.append(domain_entry)
-
-            form = OVCF1AForm(initial={'person': id})
-            date_of_event_edit = str(date_of_event_edit)
-
+        err_msgg = "Can't alter after 30 days"
+        # return HttpResponseRedirect(reverse('form1a_events', args=(id,)))
         return render(request,
-                      'forms/edit_form1a.html',
+                      'forms/form1a_events.html',
                       {'form': form, 'init_data': init_data,
-                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
-                       'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
+                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type, 'err_msgg': err_msgg})
 
-
-@login_required(login_url='/')
-def delete_form1aa(request, id, btn_event_type, btn_event_pk):
-    init_data = RegPerson.objects.filter(pk=id)
-    check_fields = ['sex_id']
-    vals = get_dict(field_name=check_fields)
-    form = OVCF1AForm(initial={'person': id})
-    return render(request,
-                  'forms/form1a_events.html',
-                  {'form': form, 'init_data': init_data,
-                   'vals': vals})
 
 
 @login_required(login_url='/')
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def delete_form1a(request, id, btn_event_type, btn_event_pk):
     jsonForm1AData = []
-    print btn_event_type
+    msg=''
     try:
         event_id = uuid.UUID(btn_event_pk)
-        # event = OVCCareEvents.objects.get(pk=event_id)
-        MAX_DAYS_FOR_DELTE = 30
-        #d = datetime.today() - timedelta(days=days_to_subtract)
         d_event= OVCCareEvents.objects.filter(pk=event_id)[0].timestamp_created
-        d_today= datetime.now()
-        d_today=d_today.strftime("%Y-%m-%d")
-        d_event=d_event.strftime("%Y-%m-%d")
-        from dateutil import parser
-        d_today = parser.parse(d_today)
-        d_event = parser.parse(d_event)
-        print d_today
-        print d_event
-        delta = d_today - d_event
-
-        if delta.days < 30:
+        delta=get_days_difference(d_event)
+        if delta < 30:
             event = OVCCareEvents.objects.filter(pk=event_id)
             if event:
                 if btn_event_type =='ASSESSMENT':
@@ -7358,6 +7349,8 @@ def delete_form1a(request, id, btn_event_type, btn_event_pk):
                 elif btn_event_type == 'SERVICES':
                     OVCCareServices.objects.filter(event=event).delete()
                 msg = 'Deleted successfully'
+        else:
+            msg = "Can't delete after 30 days"
     except Exception, e:
         msg = 'An error occured : %s' %str(e)
         print str(e)

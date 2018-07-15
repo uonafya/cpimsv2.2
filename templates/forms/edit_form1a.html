@@ -91,6 +91,7 @@
     <p></p>
 </div>
 
+
 <!-- begin row -->
 <div id='case_details' class="row">
 
@@ -231,7 +232,7 @@
                                        <!-- <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="saveForm1A(1)">Update Assessment</button>-->
                                         <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="updateForm1A(1)">Update Assessment</button>
 
-                                        <a href="#" onClick="history.back()" class="btn btn-white">Back</a>
+                                        <a href="{% url 'form1a_events'  id=form.person.value %}"  class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +280,7 @@
                                     <div class="col-md-6 col-sm-6">
                                         <!--<button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="saveForm1A(2)">Submit Critical Event(s)</button>-->
                                         <button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="updateForm1A(2)">Update Critical Event(s)</button>
-                                        <a href="#" onClick="history.back()" class="btn btn-white">Back</a>
+                                        <a href="{% url 'form1a_events'  id=form.person.value %}" onClick="back()" class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -358,8 +359,8 @@
                                 <div class="form-group">
                                     <label class="control-label col-md-4 col-sm-4"></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <button id="mysubmit-f1a-2" class="btn btn-primary" type="button" onClick="saveForm1A(3)">Submit Priority(s)</button>
-                                        <a href="#" onClick="resetForm1A(3)" class="btn btn-white">Cancel</a>
+                                        <button id="mysubmit-f1a-2" class="btn btn-primary" type="button" onClick="updateForm1A(3)">Update Priority(s)</button>
+                                        <a href="{% url 'form1a_events'  id=form.person.value %}"  class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -468,7 +469,7 @@
                                         <!--<button id="mysubmit-f1a-3" class="btn btn-primary" type="button" onClick="saveForm1A(4)">Update Service(s)</button>-->
                                         <button id="mysubmit-f1a-3" class="btn btn-primary" type="button" onClick="updateForm1A(4)">Update Service(s)</button>
 
-                                        <a href="#"  onClick="history.back()" class="btn btn-white">Back</a>
+                                        <a href="{% url 'form1a_events'  id=form.person.value %}" class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -1700,7 +1701,7 @@ $("#olmis_critical_event").change(function(event)
     displayVals(1, 'olmis_critical_event');
 });
 
-$('#date_of_cevent').datepicker({ format: 'dd-M-yyyy' });
+$('#date_of_cevent').datepicker({ format: 'yyyy-m-dd' });
 $('#date_of_cevent').datepicker().on('change.dp', function(e) {
     $("#date_errormsg1").css({ 'display': "none" });
 });
@@ -1790,7 +1791,7 @@ $("#olmis_place_of_service").change(function(event)
 	$("#olmis_place_of_service_errormsg").css({ 'display': "none" });
 });
 
-$('#date_of_service').datepicker({ format: 'dd-M-yyyy' });
+$('#date_of_service').datepicker({ format: 'yyyy-m-dd' });
 $('#date_of_service').datepicker().on('change.dp', function(e) {
     $("#date_errormsg2").css({ 'display': "none" });
 });
@@ -1852,8 +1853,9 @@ $(".delete_savedF1_element").click(function(event) {
 });
 
 
-console.log($('#event_date_id').val());
 $('#date_of_assessment').val($('#event_date_id').val());
+$('#date_of_cevent').val($('#event_date_id').val());
+$('#date_of_service').val($('#event_date_id').val());
 
 
 

@@ -1210,6 +1210,19 @@ def luhn_checksum(check_number):
         checksum += sum(digits_of(d * 2))
     return checksum % 10
 
+def get_days_difference(d_event):
+    '''
+    get difference of provided date and today's day
+    '''
+    d_today = datetime.datetime.now()
+    d_today = d_today.strftime("%Y-%m-%d")
+    d_event = d_event.strftime("%Y-%m-%d")
+    from dateutil import parser
+    d_today = parser.parse(d_today)
+    d_event = parser.parse(d_event)
+    delta = d_today - d_event
+
+    return delta.days
 
 def is_luhn_valid(check_number):
     '''

@@ -68,7 +68,7 @@
             </div>
             <div class="modal-body">
                 <div>
-                    <h4><i class="fa fa-info-circle"></i> <small><b><span id="span_csi_alert" class="dialog_paragraph"></span></b></small></h4>               
+                    <h4><i class="fa fa-info-circle"></i> <small><b><span id="span_csi_alert" class="dialog_paragraph"></span></b></small></h4>
                 </div>
             </div>
             <div class="modal-footer">
@@ -91,6 +91,26 @@
     <p></p>
 </div>
 
+<!-- this tow notfication entities are reusable upon closing. -->
+<div class="alert alert-success" id="notification-susccess" hidden="hidden">
+    <button type="button" class="close" data-hide="alert">&times;</button>
+    <p></p>
+</div>
+
+<div class="alert alert-danger fade in" id="notification-error" hidden="hidden">
+    <button type="button" class="close" data-hide="alert">&times;</button>
+    <p></p>
+</div>
+
+
+{% if err_msgg  %}
+
+<div class="alert alert-danger">
+  <a class="close" data-dismiss="alert" href="#">&times;</a>
+  {{ err_msgg }}
+</div>
+
+{% endif %}
 
 <!--<button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#delete-form1a-entry">Open Modal</button>-->
 
@@ -1815,20 +1835,29 @@ function deleteForm1aEntry(){
                 method: 'GET',
                 success: function(result)
                 {
-                    //$(".alert").show();
-                    //$('.invalid-form-message').html('Error loading Form1A events - ' + error);
-
-                    <!--$('#success_message').css({'display': 'block'});-->
-                    <!--$('#success_message p').html(result.msg);-->
-
-                    location.reload();
+                    if (result[0].msg.includes("30")){
+                        $('#notification-error').css({'display': 'block'});
+                        $('#notification-error p').html(result[0].msg);
+                    }else{
+                        $('#notification-susccess').css({'display': 'block'});
+                        $('#notification-susccess p').css({'display': 'block'});
+                        location.reload();
+                         console.log("got 1");
+                    }
+                    console.log("got 2");
                 },
                 error: function(xhr, status, error){
-                    <!--$(".alert").show();-->
-                    <!--$('.invalid-form-message').html('Error loading Form1A events - ' + error);-->
+                    $('#notification-error').css({'display': 'block'});
+                    $('#notification-error p').html(result[0].msg);
                 }
             });
 }
+
+$(function(){
+    $("[data-hide]").on("click", function(){
+        $(this).closest("." + $(this).attr("data-hide")).hide();
+    });
+});
 
 </script>	
 {% endblock %}
