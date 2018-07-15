@@ -192,7 +192,7 @@
                                             	</b></h6>
                                             </td>
                                         </tr>
-                                        <tr><td colspan="4"><h4 style="text-align: center;">Service list</h4></td></tr>
+                                        <tr><td colspan="4"><h4 style="text-align: center;">Assessment list</h4></td></tr>
                                     {% for domain in service_type_list %}
                                         {% for key, values in domain.items %}
                                                 <tr>
@@ -231,7 +231,7 @@
                                        <!-- <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="saveForm1A(1)">Update Assessment</button>-->
                                         <button id="mysubmit-f1a-0" class="btn btn-primary" type="button" onClick="updateForm1A(1)">Update Assessment</button>
 
-                                        <a href="#" onClick="#" class="btn btn-white">Cancel</a>
+                                        <a href="#" onClick="history.back()" class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +279,7 @@
                                     <div class="col-md-6 col-sm-6">
                                         <!--<button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="saveForm1A(2)">Submit Critical Event(s)</button>-->
                                         <button id="mysubmit-f1a-1" class="btn btn-primary" type="button" onClick="updateForm1A(2)">Update Critical Event(s)</button>
-                                        <a href="#" onClick="#" class="btn btn-white">Cancel</a>
+                                        <a href="#" onClick="history.back()" class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -432,6 +432,18 @@
                                                 </b></h6>
                                             </td>
                                         </tr>
+                                        <tr><td colspan="4"><h4 style="text-align: center;">Service list</h4></td></tr>
+                                        {% for service in services_list %}
+                                            <tr class="doNotParse">
+                                                <td> <h6 class="td_style">#</h6> </td>
+                                                <td> <h6 class="td_style"> {{service.detail}} </h6></td>
+                                                <!--<td> <h6 class="td_style"> {{values.1}} </h6> </td>-->
+
+                                                <td colspan="2" style="text-align: center;"> <h6 class="td_style"> {{service.date}} </h6> </td>
+                                                <td> <h6 class="dialog_paragraph"><a id="{{service.id}}" data-event_type={{event_type}} class="delete_savedF1_element" href='#'>Delete</a> </h6> </td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr><td colspan="4"><hr style="border-color: red;"></td></tr>
                                     </tbody>
                                     {{ form.olmis_service_provided_list }}
                                 </table>
@@ -453,8 +465,10 @@
                                 <div class="form-group">
                                     <label class="control-label col-md-4 col-sm-4"></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <button id="mysubmit-f1a-3" class="btn btn-primary" type="button" onClick="saveForm1A(4)">Submit Service(s)</button>
-                                        <a href="#" onClick="resetForm1A(4)" class="btn btn-white">Cancel</a>
+                                        <!--<button id="mysubmit-f1a-3" class="btn btn-primary" type="button" onClick="saveForm1A(4)">Update Service(s)</button>-->
+                                        <button id="mysubmit-f1a-3" class="btn btn-primary" type="button" onClick="updateForm1A(4)">Update Service(s)</button>
+
+                                        <a href="#"  onClick="history.back()" class="btn btn-white">Back</a>
                                     </div>
                                 </div>
                             </div>
@@ -787,6 +801,63 @@ function updateForm1A(x)
         }
     }
 
+    if(x == 4){
+
+        values['args'] = 4;
+        error_msg='Error saving service(s)';
+        error_div = '#error_service';
+
+        var date_of_service = $('#date_of_service').val();
+        var olmis_service_provided_list = $('#olmis_service_provided_list').val();
+        if(olmis_service_provided_list)
+        {
+            values['olmis_service_provided_list'] = olmis_service_provided_list;
+
+            if(date_of_service)
+            {
+                values['date_of_service'] = date_of_service;
+                $.ajax({
+                    url: '{% url 'update_form1a' %}',
+                    dataType: 'json',
+                    method: 'POST',
+                    data: values,
+                    success: function(result)
+                    {
+                        $.each(result, function(i, val)
+                        {
+                            $(".alert-danger").hide();
+                            $('#success_message').css({'display': 'block'});
+                            $('#success_message p').html(val.msg);
+                        });
+                        //loadForm1aEvents();
+                        //resetForm1A(4);
+                    },
+                    error: function(xhr, status, error){
+                        $(".alert-danger").hide();
+                        $("" + error_div + "").addClass( "alert alert-danger fade in" );
+                        $("" + error_div + "").html(msg + error)
+                    }
+                });
+            }
+            else
+            {
+                $('#success_message').css({'display': 'none'});
+                $(".alert-danger").show();
+                $('.invalid-form-message').html('Please provide required date of event.');
+                $('#date_errormsg3').css({'display': 'block'});
+                return false;
+            }
+        }
+        else
+        {
+            $('#success_message').css({'display': 'none'});
+            $(".alert-danger").show();
+            $('.invalid-form-message').html('Please provide required service(s) response(s).');
+            return false;
+        }
+    }
+
+
 }
 
 
@@ -1116,16 +1187,19 @@ function AddRow(x)
 
                 $('#services_manager_table tr').each(function(row, tr)
                 {
-                    var olmis_domain = $(tr).find('input[id="holmis_domain"]').val();
-                    var olmis_service = $(tr).find('input[id="holmis_service"]').val();
-                    var olmis_service_date = $(tr).find('td:eq(3)').text();
-                    var olmis_service_status = $(tr).find('input[id="holmis_service_status"]').val();
 
-                    OlmisServiceData[row]= {
-                        "olmis_domain" : olmis_domain,
-                        "olmis_service" : olmis_service,
-                        "olmis_service_date" : olmis_service_date,
-                        "olmis_service_status" : olmis_service_status
+                        var olmis_domain = $(tr).find('input[id="holmis_domain"]').val();
+                        if(olmis_domain!=undefined){
+                            var olmis_service = $(tr).find('input[id="holmis_service"]').val();
+                            var olmis_service_date = $(tr).find('td:eq(3)').text();
+                            var olmis_service_status = $(tr).find('input[id="holmis_service_status"]').val();
+                            console.log(OlmisServiceData);
+                            OlmisServiceData[row]= {
+                                "olmis_domain" : olmis_domain,
+                                "olmis_service" : olmis_service,
+                                "olmis_service_date" : olmis_service_date,
+                                "olmis_service_status" : olmis_service_status
+                                }
                         }
 
                 });
@@ -1137,7 +1211,7 @@ function AddRow(x)
                 // Set service_provided_list
                 $('#olmis_service_provided_list').val(OlmisServiceData);
 
-                console.log(OlmisServiceData)
+               // console.log(OlmisServiceData)
 			}
 			else
 			{
@@ -1426,18 +1500,19 @@ function RemoveRow(index, uuid, tr_id)
         var OlmisServiceData = new Array();
         $('#services_manager_table tr').each(function(row, tr)
         {
-            var olmis_domain = $(tr).find('input[id="holmis_domain"]').val();
-            var olmis_service = $(tr).find('input[id="holmis_service"]').val();
-            var olmis_service_date = $(tr).find('td:eq(3)').text();
-            var olmis_service_status = $(tr).find('input[id="holmis_service_status"]').val();
+            if(!($(tr).hasClass( "do-not-parse" ))){
+	            var olmis_domain = $(tr).find('input[id="holmis_domain"]').val();
+                var olmis_service = $(tr).find('input[id="holmis_service"]').val();
+                var olmis_service_date = $(tr).find('td:eq(3)').text();
+                var olmis_service_status = $(tr).find('input[id="holmis_service_status"]').val();
 
-            OlmisServiceData[row]= {
-                "olmis_domain" : olmis_domain,
-                "olmis_service" : olmis_service,
-                "olmis_service_date" : olmis_service_date,
-                "olmis_service_status" : olmis_service_status
+                OlmisServiceData[row]= {
+                    "olmis_domain" : olmis_domain,
+                    "olmis_service" : olmis_service,
+                    "olmis_service_date" : olmis_service_date,
+                    "olmis_service_status" : olmis_service_status
+                    }
                 }
-
         });
 
         OlmisServiceData.shift(); //remove first row(headers stuff)
@@ -1489,11 +1564,12 @@ function RemoveRow(index, uuid, tr_id)
 
 
 function setInitialCriticalEvents(){
+//sets the saved critical events from database to the ui to allow edit
+
   //  var values="Test,Prof,Off";
   //  $.each(values.split(","), function(i,e){
   //      $("#olmis_critical_event option[value='" + e + "']").prop("selected", true);
   //  });
-
 
     $("#olmis_critical_event").multiselect({
        selectedText: "# of # selected"
@@ -1507,8 +1583,6 @@ function setInitialCriticalEvents(){
         $("#olmis_critical_event").find("option[value="+optionVal+"]").prop("selected", "selected");
     }
     $("#olmis_critical_event").multiselect('refresh');
-
-
 
 //    $("#olmis_critical_event").trigger( "change" );
 }
@@ -1622,7 +1696,7 @@ $('#date_of_assessment').datepicker().on('change.dp', function(e) {
 
 
 $("#olmis_critical_event").change(function(event)
-{  
+{
     displayVals(1, 'olmis_critical_event');
 });
 

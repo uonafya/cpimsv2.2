@@ -7164,33 +7164,36 @@ def update_form1a(request):
                 date_of_service = request.POST.get('date_of_service')
                 if date_of_service:
                     date_of_service = convert_date(date_of_service)
-
-                event_obj = OVCCareEvents.objects.get(pk=request.POST.get('event_pk'))
-                ovc_care_priority = OVCCareServices.objects.filter(event=event_obj)[:1]
+                ovc_care_services = OVCCareServices.objects.filter(event=event_obj)[:1]
                 # Support/Services
                 olmis_service_provided_list = request.POST.get('olmis_service_provided_list')
                 if olmis_service_provided_list:
                     olmis_service_data = json.loads(olmis_service_provided_list)
-                    print 'olmis_service_data >> %s' %olmis_service_data
+                    # print 'olmis_service_data >> %s' %olmis_service_data
                     org_unit = ou_primary if ou_primary else ou_attached[0]
-
+                    print "stop point 1"
                     for service_data in olmis_service_data:
-                        service_grouping_id = new_guid_32()
-                        olmis_domain = service_data['olmis_domain']
-                        olmis_service_date = service_data['olmis_service_date']
-                        olmis_service_date = convert_date(olmis_service_date) if olmis_service_date != 'None' else None
-                        olmis_service = service_data['olmis_service']
-                        print 'olmis_service: %s' %olmis_service
-                        services = olmis_service.split(',')
-                        for service in services:
-                            OVCCareServices(
-                                service_provided = service,
-                                service_provider = org_unit,
-                                # place_of_service = olmis_place_of_service,
-                                date_of_encounter_event = olmis_service_date,
-                                event = OVCCareEvents.objects.get(pk=event_obj),
-                                service_grouping_id = ovc_care_priority.service_grouping_id
-                            ).save()
+                        if service_data is not None:
+                            print "stop point 2"
+                           # olmis_domain = service_data['olmis_domain']
+                            olmis_service_date = service_data['olmis_service_date']
+                            print "stop point 3"
+                            print olmis_service_date
+                            olmis_service_date = convert_date(olmis_service_date) if olmis_service_date != 'None' else None
+                            print "stop point 4"
+                            olmis_service = service_data['olmis_service']
+                            print "stop point 5"
+                            print 'olmis_service: %s' %olmis_service
+                            services = olmis_service.split(',')
+                            for service in services:
+                                OVCCareServices(
+                                    service_provided = service,
+                                    service_provider = org_unit,
+                                    # place_of_service = olmis_place_of_service,
+                                    date_of_encounter_event = olmis_service_date,
+                                    event = event_obj,
+                                    service_grouping_id = ovc_care_services[0].service_grouping_id
+                                ).save()
 
             msg = 'Save Successful'
             jsonResponse.append({'msg': msg})
@@ -7260,6 +7263,23 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                       {'form': form, 'init_data': init_data,
                         'critical_events_lst':critical_events_lst, 'vals': vals, 'event_pk': btn_event_pk,
                        'event_type': btn_event_type,'date_of_event_edit': date_of_event_edit})
+
+    elif btn_event_type == 'SERVICES':
+        date_of_event_edit = event_obj.date_of_event
+        services_list=[]
+        ## get Services
+        ovccareservices = OVCCareServices.objects.filter(event=event_obj, is_void=False)
+        for ovccareservice in ovccareservices:
+            service = {}
+            service['id']=ovccareservice.service_id
+            service['detail']=translate(ovccareservice.service_provided)
+            service['date']=(str(ovccareservice.date_of_encounter_event))
+            services_list.append(service)
+        return render(request,
+                      'forms/edit_form1a.html',
+                      {'form': form, 'init_data': init_data,
+                       'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
+                       'services_list': services_list, 'date_of_event_edit': date_of_event_edit})
 
     else:
         ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
@@ -7370,7 +7390,6 @@ def delete_previous_event_entry(request, btn_event_type, entry_id):
     return JsonResponse(jsonForm1AData,
                         content_type='application/json',
                         safe=False)
-
 
 
 @login_required
