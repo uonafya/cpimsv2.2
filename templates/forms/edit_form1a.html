@@ -595,82 +595,6 @@ arr_DHNU = new Array();
 arr_DEDU = new Array();
 domain_log = { "DSHC": arr_DSHC, "DPSS": arr_DPSS, "DPRO": arr_DPRO, "DHES": arr_DHES, "DHNU": arr_DHNU, "DEDU": arr_DEDU }
 
-function loadForm1aEvents()
-{
-    var data = new Array();
-    var csrftoken = $.cookie('csrftoken');
-    var person = $('#person').val();
-    var values = {
-                    'csrfmiddlewaretoken': csrftoken,
-                    'person': person
-                 };
-
-    $.ajax({
-                url: '{% url 'manage_form1a_events' %}',
-                dataType: 'json',
-                method: 'POST',
-                data: values,
-                success: function(result)
-                {
-                    // Clear <tbody>
-                    $("#f1a_events_data_table tbody").html('');
-
-                    $.each(result, function(i, val) {
-                        var event_pk = val.event_pk
-                        var event_type = val.event_type;
-                        var event_details = val.event_details;
-                        var event_date = val.event_date;
-
-                        var btnView = 'btnView' + i;
-                        var btnEdit = 'btnEdit' + i;
-                        var btnDelete = 'btnDelete' + i;
-                        var tableRowId = 'tableRowId' + i;
-
-                        //Actions Item
-                        var viewItem = '<button id=' + btnView + ' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-binoculars"></i></button>';
-                        var editItem = '<button id=' + btnEdit + ' type="submit" class="btn  btn-sm btn-primary m-r-5"><i class="fa fa-pencil"></i></button>';
-                        var deleteItem = '<button id=' + btnDelete + ' type="submit" class="btn  btn-sm btn-danger m-r-5"><i class="fa fa-trash"></i></button>';
-
-                        // Append to rows to table rows
-                        $("#f1a_events_data_table tbody").append('<tr id=' + tableRowId + '>' +
-                            '<td width="25%"><h6>' + event_type + '</h6></td>' +
-                            '<td width="25%"><h6>' + event_details + '</h6></td>' +
-                            '<td width="25%"><h6>' + event_date + '</h6></td>' +
-                            '<td>' +
-                            /*' + viewItem + '' + **/
-                            '' + editItem + '' +
-                            '' + deleteItem + '' +
-                            '</td></tr>');
-
-                        // Add Click Event To Buttons
-                        $("#" + btnView + "").click(function(e)
-                        {
-                        });
-
-                        $("#" + btnEdit + "").click(function(e)
-                        {   var personId=$('#person').val();
-
-                            window.open(url,"_self");
-                        });
-
-
-                        $("#" + btnDelete + "").click(function(e)
-                        {   var personId=$('#person').val();
-
-                        });
-
-
-                    });
-
-                },
-                error: function(xhr, status, error){
-                    $(".alert").show();
-                    $('.invalid-form-message').html('Error loading Form1A events - ' + error);
-                }
-            });
-}
-
-
 function updateForm1A(x)
 {
     var args = 0;
@@ -719,7 +643,7 @@ function updateForm1A(x)
                             $('#success_message p').html(val.msg);
                         });
                         //loadForm1aEvents();
-                       // resetForm1A(1);
+                        resetForm1A(1);
                     },
                     error: function(xhr, status, error){
                         $(".alert-danger").hide();
@@ -866,8 +790,8 @@ function resetForm1A(x)
 {
     if(x==1)
     {
-        $('#assessment_manager_table').find("tr:gt(1)").remove();
-        $('#date_of_assessment').val('');
+        //$('#assessment_manager_table').find("tr:gt(1)").remove();
+        //$('#date_of_assessment').val('');
         $("#olmis_assessment_domain").multiselect("clearSelection");
         $("#olmis_assessment_domain").multiselect("refresh");
         $("#olmis_assessment_coreservice").multiselect("clearSelection");

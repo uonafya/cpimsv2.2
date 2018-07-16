@@ -80,32 +80,23 @@
 <!-- #end-csi-warning-dialog -->
 
 <div id="error_message" class="alert alert-danger fade in" style="display: none;" tabindex="1">
-    <span class="close" data-dismiss="alert">×</span>
+    <!--<span class="close" data-dismiss="alert">×</span>-->
+    <button type="button" class="close" data-hide="alert">&times;</button>
     <i class="fa fa-info fa-2x pull-left"></i>
     <span class="invalid-form-message" id="invalid-form-message"></span>
 </div>
 
 <div id="success_message" class="alert alert-success fade in" style="display: none;">
-    <span class="close" data-dismiss="alert">×</span>
+    <!--<span class="close" data-dismiss="alert">×</span>-->
+    <button type="button" class="close" data-hide="alert">&times;</button>
     <i class="fa fa-check fa-2x pull-left"></i>
-    <p></p>
-</div>
-
-<!-- this tow notfication entities are reusable upon closing. -->
-<div class="alert alert-success" id="notification-susccess" hidden="hidden">
-    <button type="button" class="close" data-hide="alert">&times;</button>
-    <p></p>
-</div>
-
-<div class="alert alert-danger fade in" id="notification-error" hidden="hidden">
-    <button type="button" class="close" data-hide="alert">&times;</button>
     <p></p>
 </div>
 
 
 {% if err_msgg  %}
 
-<div class="alert alert-danger">
+<div class="alert alert-danger" id="error-message-reuse">
   <a class="close" data-dismiss="alert" href="#">&times;</a>
   {{ err_msgg }}
 </div>
@@ -745,6 +736,7 @@ function saveForm1A(x)
                             $(".alert-danger").hide();
                             $('#success_message').css({'display': 'block'});
                             $('#success_message p').html(val.msg);
+                            $('#error-message-reuse').css({'display': 'none'});
                         });
                         loadForm1aEvents();
                         resetForm1A(1);
@@ -801,6 +793,7 @@ function saveForm1A(x)
                             $(".alert-danger").hide();
                             $('#success_message').css({'display': 'block'});
                             $('#success_message p').html(val.msg);
+                            $('#error-message-reuse').css({'display': 'none'});
                         });
                         loadForm1aEvents();
                         resetForm1A(2);
@@ -858,6 +851,7 @@ function saveForm1A(x)
                             $(".alert-danger").hide();
                             $('#success_message').css({'display': 'block'});
                             $('#success_message p').html(val.msg);
+                            $('#error-message-reuse').css({'display': 'none'});
                         });
                         loadForm1aEvents();
                         resetForm1A(3);
@@ -915,6 +909,7 @@ function saveForm1A(x)
                             $(".alert-danger").hide();
                             $('#success_message').css({'display': 'block'});
                             $('#success_message p').html(val.msg);
+                            $('#error-message-reuse').css({'display': 'none'});
                         });
                         loadForm1aEvents();
                         resetForm1A(4);
@@ -1836,19 +1831,26 @@ function deleteForm1aEntry(){
                 success: function(result)
                 {
                     if (result[0].msg.includes("30")){
-                        $('#notification-error').css({'display': 'block'});
-                        $('#notification-error p').html(result[0].msg);
+                        $('#error_message').css({'display': 'block'});
+                        $('#success_message').css({'display': 'none'});
+                        $('#error-message-reuse').css({'display': 'none'});
+                        $('#error_message span').html(result[0].msg);
+
                     }else{
-                        $('#notification-susccess').css({'display': 'block'});
-                        $('#notification-susccess p').css({'display': 'block'});
-                        location.reload();
-                         console.log("got 1");
+                        $('#success_message').css({'display': 'block'});
+                        $('#success_message p').html(result[0].msg);
+                        $('#error-message-reuse').css({'display': 'none'});
+                        $('#error_message').css({'display': 'none'});
+                         var personId=$('#person').val();
+                         var url = "{% url 'form1a_events' id=1234%}".replace(/1234/, personId.toString());
+                         window.open(url,"_self");
+
                     }
                     console.log("got 2");
                 },
                 error: function(xhr, status, error){
-                    $('#notification-error').css({'display': 'block'});
-                    $('#notification-error p').html(result[0].msg);
+                    $('#error_message').css({'display': 'block'});
+                    $('#error_message span').html(result[0].msg);
                 }
             });
 }

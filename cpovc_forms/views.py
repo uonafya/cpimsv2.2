@@ -7339,6 +7339,7 @@ def delete_form1a(request, id, btn_event_type, btn_event_pk):
         delta=get_days_difference(d_event)
         if delta < 30:
             event = OVCCareEvents.objects.filter(pk=event_id)
+            print "we are here"
             if event:
                 if btn_event_type =='ASSESSMENT':
                     OVCCareAssessment.objects.filter(event=event).delete()
