@@ -7109,7 +7109,7 @@ def update_form1a(request):
                                     event=event_obj,
                                     service_grouping_id=ovc_care_assessment[0].service_grouping_id
                                     ).save()
-
+            # Critical Events
             if args == 2:
                 date_of_cevent = request.POST.get('date_of_cevent')
                 if date_of_cevent:
@@ -7134,6 +7134,7 @@ def update_form1a(request):
                         event=event_obj
                     ).save()
 
+            # Priority(s)
             if args == 3:
                 date_of_priority = request.POST.get('date_of_priority')
                 if date_of_priority:
@@ -7156,10 +7157,10 @@ def update_form1a(request):
                                 OVCCarePriority(
                                     domain =olmis_priority_domain,
                                     service = service,
-                                    event = OVCCareEvents.objects.get(pk=event_obj),
+                                    event = event_obj,
                                     service_grouping_id = ovc_care_priority[0].service_grouping_id
                                     ).save()
-
+            # Services
             if args == 4:
                 date_of_service = request.POST.get('date_of_service')
                 if date_of_service:
@@ -7195,7 +7196,7 @@ def update_form1a(request):
                                     service_grouping_id = ovc_care_services[0].service_grouping_id
                                 ).save()
 
-            msg = 'Save Successful'
+            msg = 'Saved Successful'
             jsonResponse.append({'msg': msg})
     except Exception, e:
         print e
@@ -7289,35 +7290,26 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                            'services_list': services_list, 'date_of_event_edit': date_of_event_edit})
 
         else:
-            ovc_care_assessments = OVCCareAssessment.objects.filter(event=event_obj)
-            olmis_assessment_domain_list = get_list(
-                'olmis_assessment_domain_id', 'Please Select')
             date_of_event_edit = event_obj.date_of_event
-            service_type_list = []
-            for ovc_care_assessment in ovc_care_assessments:
-                domain_entry = {}
-                assessment_entry = []
-                domain_full_name = [domain for domain in olmis_assessment_domain_list if
-                                    domain[0] == ovc_care_assessment.domain]
-
-                ovc_care_assessment.assessment_id
-                ovc_care_assessment.service
-                ovc_care_assessment.service_status
-
-                assessment_entry.append(domain_full_name[0][1])
-                assessment_entry.append(translate(ovc_care_assessment.service))
-                assessment_entry.append(translate(ovc_care_assessment.service_status))
-                domain_entry[ovc_care_assessment.assessment_id] = assessment_entry
-                service_type_list.append(domain_entry)
-
-                form = OVCF1AForm(initial={'person': id})
-                date_of_event_edit = str(date_of_event_edit)
-
+            date_of_event_edit=str(date_of_event_edit)
+            priority_lists = []
+            olmis_domain_list = get_list('olmis_domain_id', 'Please Select')
+            ## get Prioritys
+            ovcprioritys = OVCCarePriority.objects.filter(event=event_obj, is_void=False)
+            for ovcpriority in ovcprioritys:
+                priorty = {}
+                domain_full_name = [domain for domain in olmis_domain_list if
+                                    domain[0] == ovcpriority.domain]
+                priorty['id']=str(ovcpriority.pk)
+                priorty['domain']=domain_full_name[0][1]
+                priorty['need']=translate(ovcpriority.service)
+                priority_lists.append(priorty)
+            print priority_lists
             return render(request,
                           'forms/edit_form1a.html',
                           {'form': form, 'init_data': init_data,
                            'vals': vals, 'event_pk': btn_event_pk, 'event_type': btn_event_type,
-                           'service_type_list': service_type_list, 'date_of_event_edit': date_of_event_edit})
+                           'priority_lists': priority_lists, 'date_of_event_edit': date_of_event_edit})
     else:
         err_msgg = "Can't alter after 30 days"
         # return HttpResponseRedirect(reverse('form1a_events', args=(id,)))

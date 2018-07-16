@@ -297,6 +297,7 @@
                             <div id="div-priority-need0" style="display: none" class="panel-body">
                                 <legend><span>Priority Needs are not required. This is scheduled for January, May and November</span></legend>
                             </div>
+
                             <div id="div-priority-need1" style="display: none" class="panel-body">
                                 <div id="error_priority"></div>
                                 <table id="priority_manager_table" class="table">
@@ -364,8 +365,33 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-						<!-- end wizard step-3 -->
+                            </br>
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr ><td colspan="3" style="font-weight: bold;">Saved Priorities</td></tr>
+                                <tr>
+                                    <th>Domain</th> <th>Priority Need</th> <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                {% for priority_dict in priority_lists %}
+                                <tr>
+                                        <td>{{ priority_dict.domain }} </td>
+                                        <td>{{ priority_dict.need }} </td>
+                                        <td><a id="{{priority_dict.id}}" data-event_type={{event_type}} class="delete_savedF1_element btn btn-danger" href='#'>Delete</a></td>
+                                </tr>
+                                {% endfor %}
+                                <tr><td colspan="3">
+                                    <div style="margin-right: auto; margin-left: auto; width: 50%; text-align: center;">
+                                         <a   href="{% url 'form1a_events'  id=form.person.value %}" class="btn btn-primary text-center">Back</a>
+                                    </div>
+                                </td></tr>
+                                </tbody>
+                            </table>
+
+						</div>
+                            <!-- end wizard step-3 -->
 
                         {% endif %}
 
@@ -621,8 +647,8 @@ function updateForm1A(x)
         var date_of_assessment = $('#date_of_assessment').val();
         console.log(date_of_assessment);
         var olmis_assessment_provided_list = $('#olmis_assessment_provided_list').val();
-        //if(olmis_assessment_provided_list)
-        if(1)
+        if(olmis_assessment_provided_list)
+        //if(1)
         {
             values['olmis_assessment_provided_list'] = olmis_assessment_provided_list;
 
@@ -726,6 +752,65 @@ function updateForm1A(x)
         }
     }
 
+
+    // Priority(s)
+    if(x == 3){
+        values['args'] = 3;
+        error_msg='Error saving priority(s)';
+        error_div = '#error_priority';
+
+        var date_of_priority = $('#date_of_priority').val();
+        var olmis_priority_service_provided_list = $('#olmis_priority_service_provided_list').val();
+        if(olmis_priority_service_provided_list)
+        {
+            values['olmis_priority_service_provided_list'] = olmis_priority_service_provided_list;
+
+            if(date_of_priority)
+            {
+                values['date_of_priority'] = date_of_priority;
+                $.ajax({
+                    url: '{% url 'update_form1a' %}',
+                    dataType: 'json',
+                    method: 'POST',
+                    data: values,
+                    success: function(result)
+                    {
+                        $.each(result, function(i, val)
+                        {
+                            $(".alert-danger").hide();
+                            $('#success_message').css({'display': 'block'});
+                            $('#success_message p').html(val.msg);
+                            $('#error-message-reuse').css({'display': 'none'});
+                        });
+                        loadForm1aEvents();
+                        resetForm1A(3);
+                    },
+                    error: function(xhr, status, error){
+                        $(".alert-danger").hide();
+                        $("" + error_div + "").addClass( "alert alert-danger fade in" );
+                        $("" + error_div + "").html(msg + error)
+                    }
+                });
+            }
+            else
+            {
+                $('#success_message').css({'display': 'none'});
+                $(".alert-danger").show();
+                $('.invalid-form-message').html('Please provide required date of event.');
+                $('#date_errormsg2').css({'display': 'block'});
+                return false;
+            }
+        }
+        else
+        {
+            $('#success_message').css({'display': 'none'});
+            $(".alert-danger").show();
+            $('.invalid-form-message').html('Please provide required priority response(s).');
+            return false;
+        }
+    }
+
+    // Services
     if(x == 4){
 
         values['args'] = 4;
@@ -1683,7 +1768,7 @@ $("#olmis_priority_service").change(function(event)
 
 });
 
-$('#date_of_priority').datepicker({ format: 'dd-M-yyyy' });
+$('#date_of_priority').datepicker({ format: 'yyyy-m-dd' });
 $('#date_of_priority').datepicker().on('change.dp', function(e) {
     $("#date_errormsg3").css({ 'display': "none" });
 });
@@ -1781,7 +1866,7 @@ $('#date_of_assessment').val($('#event_date_id').val());
 $('#date_of_cevent').val($('#event_date_id').val());
 $('#date_of_service').val($('#event_date_id').val());
 
-
+$("#date_of_priority").datepicker("setDate", new Date($('#event_date_id').val()));
 
 </script>
 {% endblock %}
