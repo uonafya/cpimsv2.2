@@ -7231,7 +7231,6 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
             olmis_assessment_domain_list = get_list(
                 'olmis_assessment_domain_id', 'Please Select')
             date_of_event_edit= event_obj.date_of_event
-
             for ovc_care_assessment in ovc_care_assessments:
                 domain_entry = {}
                 assessment_entry = []
@@ -7265,7 +7264,7 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                     loop_count=loop_count+1
                 else:
                     critical_events_lst = critical_events_lst +','+ str(critical_event.value)
-            date_of_event_edit = event_obj.date_of_event
+            date_of_event_edit = str(event_obj.date_of_event)
             return render(request,
                           'forms/edit_form1a.html',
                           {'form': form, 'init_data': init_data,
@@ -7273,7 +7272,7 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                            'event_type': btn_event_type,'date_of_event_edit': date_of_event_edit})
 
         elif btn_event_type == 'SERVICES':
-            date_of_event_edit = event_obj.date_of_event
+            date_of_event_edit = str(event_obj.date_of_event)
             services_list=[]
             ## get Services
             ovccareservices = OVCCareServices.objects.filter(event=event_obj, is_void=False)
@@ -7290,8 +7289,7 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
                            'services_list': services_list, 'date_of_event_edit': date_of_event_edit})
 
         else:
-            date_of_event_edit = event_obj.date_of_event
-            date_of_event_edit=str(date_of_event_edit)
+            date_of_event_edit = str(event_obj.date_of_event)
             priority_lists = []
             olmis_domain_list = get_list('olmis_domain_id', 'Please Select')
             ## get Prioritys

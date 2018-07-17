@@ -1862,9 +1862,14 @@ $(".delete_savedF1_element").click(function(event) {
 });
 
 
-$('#date_of_assessment').val($('#event_date_id').val());
-$('#date_of_cevent').val($('#event_date_id').val());
-$('#date_of_service').val($('#event_date_id').val());
+//$('#date_of_assessment').val($('#event_date_id').val());
+//$('#date_of_cevent').val($('#event_date_id').val());
+//$('#date_of_service').val($('#event_date_id').val());
+
+
+$('#date_of_assessment').datepicker("setDate", new Date($('#event_date_id').val()));
+$('#date_of_cevent').datepicker("setDate", new Date($('#event_date_id').val()));
+$('#date_of_service').datepicker("setDate", new Date($('#event_date_id').val()));
 
 $("#date_of_priority").datepicker("setDate", new Date($('#event_date_id').val()));
 
