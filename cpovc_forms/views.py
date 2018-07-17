@@ -7044,7 +7044,8 @@ def save_form1a(request):
                         print 'olmis_service: %s' %olmis_service
                         services = olmis_service.split(',')
                         for service in services:
-                            OVCCareServices(                    
+                            OVCCareServices(
+                                domain = olmis_domain,
                                 service_provided = service,
                                 service_provider = org_unit,
                                 # place_of_service = olmis_place_of_service,
@@ -7061,6 +7062,11 @@ def save_form1a(request):
     return JsonResponse(jsonResponse, content_type='application/json', safe=False)
 
 
+def update_event_date(pk,date_of_assessment):
+    # Save F1AEvent
+    OVCCareEvents.objects.filter(pk=pk).update(date_of_event=date_of_assessment)
+
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def update_form1a(request):
@@ -7071,7 +7077,7 @@ def update_form1a(request):
             org_unit = None
             ou_primary = request.session.get('ou_primary')
             ou_attached = request.session.get('ou_attached')
-            ou_attached = ou_attached.split(',');
+            ou_attached = ou_attached.split(',')
 
             event_type_id = 'FSAM'
             args = int(request.POST.get('args'))
@@ -7084,6 +7090,7 @@ def update_form1a(request):
                 date_of_assessment = request.POST.get('date_of_assessment')
                 if date_of_assessment:
                     date_of_assessment = convert_date(date_of_assessment)
+                    #update_event_date(request.POST.get('event_pk'), date_of_assessment)
                 # update F1AEvent
 
                 ovc_care_assessment = OVCCareAssessment.objects.filter(event=event_obj)[:1]
@@ -7175,22 +7182,18 @@ def update_form1a(request):
                     print "stop point 1"
                     for service_data in olmis_service_data:
                         if service_data is not None:
-                            print "stop point 2"
-                           # olmis_domain = service_data['olmis_domain']
+                            olmis_domain = service_data['olmis_domain']
                             olmis_service_date = service_data['olmis_service_date']
-                            print "stop point 3"
                             print olmis_service_date
                             olmis_service_date = convert_date(olmis_service_date) if olmis_service_date != 'None' else None
-                            print "stop point 4"
                             olmis_service = service_data['olmis_service']
-                            print "stop point 5"
-                            print 'olmis_service: %s' %olmis_service
                             services = olmis_service.split(',')
                             for service in services:
                                 OVCCareServices(
                                     service_provided = service,
                                     service_provider = org_unit,
                                     # place_of_service = olmis_place_of_service,
+                                    domain= olmis_domain,
                                     date_of_encounter_event = olmis_service_date,
                                     event = event_obj,
                                     service_grouping_id = ovc_care_services[0].service_grouping_id
@@ -7276,11 +7279,21 @@ def edit_form1a(request, id, btn_event_type, btn_event_pk):
             services_list=[]
             ## get Services
             ovccareservices = OVCCareServices.objects.filter(event=event_obj, is_void=False)
+            olmis_domain_list = get_list('olmis_domain_id', 'Please Select')
             for ovccareservice in ovccareservices:
                 service = {}
+                assessment_entry = []
+                domain_full_name = [domain for domain in olmis_domain_list if
+                                    domain[0] == ovccareservice.domain]
+                print ovccareservice.domain
+                print ''
+                print olmis_domain_list
+                print ''
+                print domain_full_name
                 service['id']=ovccareservice.service_id
                 service['detail']=translate(ovccareservice.service_provided)
                 service['date']=(str(ovccareservice.date_of_encounter_event))
+                service['domain'] = domain_full_name[0][1]
                 services_list.append(service)
             return render(request,
                           'forms/edit_form1a.html',

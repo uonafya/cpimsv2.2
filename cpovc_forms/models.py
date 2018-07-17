@@ -736,6 +736,7 @@ class OVCCareServices(models.Model):
     service_id = models.UUIDField(primary_key=True, default=uuid.uuid1, editable=False)
     service_provided = models.CharField(max_length=250)
     service_provider = models.CharField(max_length=250, null=True)
+    domain = models.CharField(max_length=4,null=True)
     place_of_service = models.CharField(max_length=250, null=True)
     date_of_encounter_event = models.DateField(default=timezone.now, null=True)
     event = models.ForeignKey(OVCCareEvents, on_delete=models.CASCADE)

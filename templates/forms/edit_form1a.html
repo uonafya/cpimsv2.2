@@ -463,10 +463,11 @@
                                         {% for service in services_list %}
                                             <tr class="doNotParse">
                                                 <td> <h6 class="td_style">#</h6> </td>
+                                                <td> <h6 class="td_style"> {{service.domain}} </h6></td>
                                                 <td> <h6 class="td_style"> {{service.detail}} </h6></td>
                                                 <!--<td> <h6 class="td_style"> {{values.1}} </h6> </td>-->
 
-                                                <td colspan="2" style="text-align: center;"> <h6 class="td_style"> {{service.date}} </h6> </td>
+                                                <td style="text-align: center;"> <h6 class="td_style"> {{service.date}} </h6> </td>
                                                 <td> <h6 class="dialog_paragraph"><a id="{{service.id}}" data-event_type={{event_type}} class="delete_savedF1_element" href='#'>Delete</a> </h6> </td>
                                             </tr>
                                         {% endfor %}
