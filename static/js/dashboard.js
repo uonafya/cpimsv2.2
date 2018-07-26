@@ -362,7 +362,7 @@ var handleStackedChart = function () {
         }
     ];
     $.plot("#stacked-chart", xData, options);
-    
+
     function showTooltip2(x, y, contents) {
         $('<div id="tooltip" class="flot-tooltip">' + contents + '</div>').css( {
             top: y,
@@ -374,19 +374,19 @@ var handleStackedChart = function () {
     $("#stacked-chart").bind("plothover", function (event, pos, item) {
         if (item) {
             var y = item.datapoint[1] - item.datapoint[2];
-            
+
             if (previousXValue != item.series.label || y != previousYValue) {
                 previousXValue = item.series.label;
                 previousYValue = y;
                 $("#tooltip").remove();
-    
+
                 showTooltip2(item.pageX, item.pageY, y + " " + item.series.label);
             }
         }
         else {
             $("#tooltip").remove();
             previousXValue = null;
-            previousYValue = null;       
+            previousYValue = null;
         }
     });
 };

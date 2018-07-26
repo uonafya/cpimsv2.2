@@ -25,6 +25,29 @@ benficiary_id_prefix = 'B'
 workforce_id_prefix = 'W'
 
 
+
+def get_ovc_hiv_status():
+    hiv_status={}
+    hiv_status_list_envelop=[]
+    ovc_reg=OVCRegistration.objects.all()
+    ovc_reg_all_count=ovc_reg.count()
+    ovc_reg_known_count = ovc_reg.filter(Q(hiv_status__iexact = "HSTP") | Q(hiv_status__iexact = "HSTN"))
+    ovc_HSTP=ovc_reg.filter(Q(hiv_status__iexact = "HSTP")).count()
+
+    ovc_unknown_count=ovc_reg_all_count-ovc_reg_known_count.count()
+    hiv_status['ovc_unknown_count'] = ovc_unknown_count
+    hiv_status['ovc_HSTP']=ovc_reg.filter(Q(hiv_status__iexact = "HSTP")).count()
+    hiv_status['ovc_HSTN']=ovc_reg.filter(Q(hiv_status__iexact = "HSTN")).count()
+
+    on_art=ovc_reg.filter(Q(art_status = "ARAR")).count()
+    not_on_art=ovc_HSTP-on_art
+    hiv_status['on_art']=on_art
+    hiv_status['not_on_art']=not_on_art
+
+    hiv_status_list_envelop.append(hiv_status)
+    return hiv_status_list_envelop
+
+
 def dashboard():
     """Method to get dashboard totals."""
     try:
@@ -53,9 +76,10 @@ def dashboard():
         # Case categories to find pending cases
         pending_cases = OVCCaseCategory.objects.filter(
             is_void=False)
-        pending_count = pending_cases.exclude(
-            case_id__summon_status=True).count()
-        dash['pending_cases'] = pending_count
+        # pending_count = pending_cases.exclude(
+        #     case_id__summon_status=True).count()
+        # dash['pending_cases'] = pending_count
+        dash['hiv_status']=get_ovc_hiv_status()
         # Child registrations
         case_regs = {}
         # Case Records
