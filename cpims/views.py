@@ -23,7 +23,7 @@ def home(request):
         summary['guardians'] = '{:,}'.format(dash['guardian'])
         summary['workforce'] = '{:,}'.format(dash['workforce_members'])
         summary['cases'] = '{:,}'.format(dash['case_records'])
-        # summary['pending'] = '{:08}'.format(dash['pending_cases'])
+        summary['pending'] = '{:08}'.format(dash['pending_cases'])
         summary['hiv_status'] = dash['hiv_status']
         # OVC care
         odash = ovc_dashboard(request)

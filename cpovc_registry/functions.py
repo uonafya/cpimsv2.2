@@ -76,9 +76,9 @@ def dashboard():
         # Case categories to find pending cases
         pending_cases = OVCCaseCategory.objects.filter(
             is_void=False)
-        # pending_count = pending_cases.exclude(
-        #     case_id__summon_status=True).count()
-        # dash['pending_cases'] = pending_count
+        pending_count = pending_cases.exclude(
+            case_id__summon_status=True).count()
+        dash['pending_cases'] = pending_count
         dash['hiv_status']=get_ovc_hiv_status()
         # Child registrations
         case_regs = {}
