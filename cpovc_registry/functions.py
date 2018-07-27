@@ -20,10 +20,11 @@ from cpovc_auth.models import CPOVCUserRoleGeoOrg
 from cpovc_forms.models import (
     OVCCaseRecord, OVCCaseCategory, OVCCaseGeo, OVCCareServices)
 
+from django.db import connection
+
 organisation_id_prefix = 'U'
 benficiary_id_prefix = 'B'
 workforce_id_prefix = 'W'
-
 
 
 def get_ovc_hiv_status():
@@ -39,10 +40,38 @@ def get_ovc_hiv_status():
     hiv_status['ovc_HSTP']=ovc_reg.filter(Q(hiv_status__iexact = "HSTP")).count()
     hiv_status['ovc_HSTN']=ovc_reg.filter(Q(hiv_status__iexact = "HSTN")).count()
 
-    on_art=ovc_reg.filter(Q(art_status = "ARAR")).count()
+    _on_art=ovc_reg.filter(Q(art_status = "ARAR"))
+    on_art=_on_art.count()
     not_on_art=ovc_HSTP-on_art
     hiv_status['on_art']=on_art
     hiv_status['not_on_art']=not_on_art
+    suppresed=0
+    not_suppresed=0
+    #get suppresion stats
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(
+                "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                "where CAST (ovl.viral_load  AS Varchar) != 'lds' or ovl.viral_load < 1000"
+                " and ovc.art_status = 'ARAR'"
+            )
+            _suppresed = cursor.fetchall()
+            suppresed=_suppresed[0][0]
+
+
+            cursor.execute(
+                "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                "where CAST (ovl.viral_load  AS Varchar) = 'lds' or ovl.viral_load > 1000"
+                " and ovc.art_status = 'ARAR'"
+            )
+            _not_suppresed = cursor.fetchall()
+            not_suppresed=_not_suppresed[0][0]
+
+        except Exception, e:
+            print 'error with dashs - %s' % (str(e))
+
+    hiv_status['suppresed']=suppresed
+    hiv_status['not_suppresed']=not_suppresed
 
     hiv_status_list_envelop.append(hiv_status)
     return hiv_status_list_envelop
