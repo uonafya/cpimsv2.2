@@ -24,7 +24,7 @@ def home(request):
         summary['workforce'] = '{:,}'.format(dash['workforce_members'])
         summary['cases'] = '{:,}'.format(dash['case_records'])
         summary['pending'] = '{:08}'.format(dash['pending_cases'])
-        summary['hiv_status'] = dash['hiv_status']
+
         # OVC care
         odash = ovc_dashboard(request)
         ovc = {}
@@ -36,6 +36,7 @@ def home(request):
         ovc['cases'] = '{:,}'.format(odash['case_records'])
         ovc['pending'] = '{:08}'.format(odash['pending_cases'])
         ovc['household'] = 0
+        ovc['hiv_status'] = odash['hiv_status']
         child_regs = odash['child_regs']
         ovc_regs = odash['ovc_regs']
         case_regs = odash['case_regs']

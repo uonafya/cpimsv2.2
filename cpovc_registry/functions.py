@@ -27,53 +27,165 @@ benficiary_id_prefix = 'B'
 workforce_id_prefix = 'W'
 
 
-def get_ovc_hiv_status():
-    hiv_status={}
-    hiv_status_list_envelop=[]
-    ovc_reg=OVCRegistration.objects.all()
-    ovc_reg_all_count=ovc_reg.count()
-    ovc_reg_known_count = ovc_reg.filter(Q(hiv_status__iexact = "HSTP") | Q(hiv_status__iexact = "HSTN"))
-    ovc_HSTP=ovc_reg.filter(Q(hiv_status__iexact = "HSTP")).count()
+def get_hiv_suppression_stats(request,org_ids):
+    suppressed = 0
+    not_suppressed = 0
+    ids = ','.join(str(e) for e in org_ids)
+    # get suppresion stats
+    if request.user.is_superuser:
 
-    ovc_unknown_count=ovc_reg_all_count-ovc_reg_known_count.count()
-    hiv_status['ovc_unknown_count'] = ovc_unknown_count
-    hiv_status['ovc_HSTP']=ovc_reg.filter(Q(hiv_status__iexact = "HSTP")).count()
-    hiv_status['ovc_HSTN']=ovc_reg.filter(Q(hiv_status__iexact = "HSTN")).count()
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(
+                    "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                    "where CAST (ovl.viral_load  AS Varchar) != 'lds' or ovl.viral_load < 1000"
+                    " and ovc.art_status = 'ARAR' and ovc.child_cbo_id in ({0})".format(ids)
+                )
+                suppressed = cursor.fetchall()[0][0]
 
-    _on_art=ovc_reg.filter(Q(art_status = "ARAR"))
-    on_art=_on_art.count()
-    not_on_art=ovc_HSTP-on_art
-    hiv_status['on_art']=on_art
-    hiv_status['not_on_art']=not_on_art
-    suppresed=0
-    not_suppresed=0
-    #get suppresion stats
+                cursor.execute(
+                    "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                    "where CAST (ovl.viral_load  AS Varchar) = 'lds' or ovl.viral_load > 1000"
+                    " and ovc.art_status = 'ARAR'"
+                )
+                not_suppressed = cursor.fetchall()[0][0]
+
+            except Exception, e:
+                print 'error fetching suppression stats - %s' % (str(e))
+    else:
+
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(
+                    "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                    "where CAST (ovl.viral_load  AS Varchar) != 'lds' or ovl.viral_load < 1000"
+                    " and ovc.art_status = 'ARAR' and ovc.child_cbo_id in ({0})".format(ids)
+                )
+                suppressed = cursor.fetchall()[0][0]
+
+                cursor.execute(
+                    "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
+                    "where CAST (ovl.viral_load  AS Varchar) = 'lds' or ovl.viral_load > 1000"
+                    " and ovc.art_status = 'ARAR' and ovc.child_cbo_id in ({0})".format(ids)
+                )
+                not_suppressed = cursor.fetchall()[0][0]
+
+            except Exception, e:
+                print 'error fetching suppression stats - %s' % (str(e))
+    return suppressed, not_suppressed
+
+
+def get_super_user_hiv_dashboard_stats(request,org_ids):
+    ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP = 0, 0, 0, 0, 0
     with connection.cursor() as cursor:
         try:
             cursor.execute(
-                "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
-                "where CAST (ovl.viral_load  AS Varchar) != 'lds' or ovl.viral_load < 1000"
-                " and ovc.art_status = 'ARAR'"
+                "Select count(*)  from ovc_registration"
             )
-            _suppresed = cursor.fetchall()
-            suppresed=_suppresed[0][0]
+            row = cursor.fetchone()
+            ovc_reg_all_count = row[0]
+
+            cursor.execute(
+                "select count(*) from ovc_registration where hiv_status='HSTP' or hiv_status= 'HSTN'"
+            )
+            row = cursor.fetchone()
+            ovc_reg_known_count = row[0]
+
+            cursor.execute(
+                "select count(*) from ovc_registration where hiv_status = 'HSTP'"
+            )
+            row = cursor.fetchone()
+            ovc_HSTP = row[0]
+
+            ovc_unknown_count = ovc_reg_all_count - ovc_reg_known_count
 
 
             cursor.execute(
-                "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
-                "where CAST (ovl.viral_load  AS Varchar) = 'lds' or ovl.viral_load > 1000"
-                " and ovc.art_status = 'ARAR'"
+                "select count(*) from ovc_registration where art_status='ARAR'"
+
             )
-            _not_suppresed = cursor.fetchall()
-            not_suppresed=_not_suppresed[0][0]
+            row = cursor.fetchone()
+            on_art = row[0]
+
+            cursor.execute(
+                "select  count(*) from ovc_registration where  hiv_status = 'HSTN'"
+            )
+            row = cursor.fetchone()
+
+            ovc_HSTN = row[0]
+            not_on_art = ovc_HSTP - on_art
 
         except Exception, e:
-            print 'error with dashs - %s' % (str(e))
+            print 'error on get_super_user_hiv_dashboard_stats - %s' % (str(e))
 
-    hiv_status['suppresed']=suppresed
-    hiv_status['not_suppresed']=not_suppresed
+    return ovc_unknown_count,ovc_HSTN, on_art, not_on_art, ovc_HSTP
 
+
+def get_normal_user_hiv_dashboard_stats(request,org_ids):
+    ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP = 0, 0, 0, 0, 0
+    ids = ','.join(str(e) for e in org_ids)
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(
+                "Select count(*)  from ovc_registration where child_cbo_id in ({0})".format(ids)
+            )
+            row = cursor.fetchone()
+            ovc_reg_all_count = row[0]
+
+            cursor.execute(
+                "select count(*) from ovc_registration where hiv_status='HSTP' or hiv_status= 'HSTN' and child_cbo_id in ({0})".format(ids)
+            )
+            row = cursor.fetchone()
+            ovc_reg_known_count = row[0]
+
+            cursor.execute(
+                "select count(*) from ovc_registration where hiv_status = 'HSTP' and child_cbo_id in ({0})".format(ids)
+            )
+            row = cursor.fetchone()
+            ovc_HSTP = row[0]
+
+            ovc_unknown_count = ovc_reg_all_count - ovc_reg_known_count
+
+
+            cursor.execute(
+                "select count(*) from ovc_registration where art_status='ARAR' and child_cbo_id in ({0})".format(ids)
+
+            )
+            row = cursor.fetchone()
+            on_art = row[0]
+
+            cursor.execute(
+                "select  count(*) from ovc_registration where  hiv_status = 'HSTN' and child_cbo_id in ({0})".format(ids)
+            )
+            row = cursor.fetchone()
+            ovc_HSTN = row[0]
+            not_on_art = ovc_HSTP - on_art
+
+        except Exception, e:
+            print 'error on dashs - %s' % (str(e))
+
+    return ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP
+
+
+def get_ovc_hiv_status(request,org_ids):
+    hiv_status={}
+    hiv_status_list_envelop=[]
+    if request.user.is_superuser:
+        hiv_stats = get_super_user_hiv_dashboard_stats(request,org_ids)
+    else:
+        hiv_stats = get_normal_user_hiv_dashboard_stats(request,org_ids)
+
+    supression = get_hiv_suppression_stats(request,org_ids)
+    hiv_status['ovc_unknown_count'] = hiv_stats[0]
+    hiv_status['ovc_HSTN'] = hiv_stats[1]
+    hiv_status['on_art'] = hiv_stats[2]
+    hiv_status['not_on_art'] = hiv_stats[3]
+    hiv_status['ovc_HSTP'] = hiv_stats[4]
+
+    hiv_status['suppresed'] = supression[0]
+    hiv_status['not_suppresed'] = supression[1]
     hiv_status_list_envelop.append(hiv_status)
+
     return hiv_status_list_envelop
 
 
@@ -108,7 +220,6 @@ def dashboard():
         pending_count = pending_cases.exclude(
             case_id__summon_status=True).count()
         dash['pending_cases'] = pending_count
-        dash['hiv_status']=get_ovc_hiv_status()
         # Child registrations
         case_regs = {}
         # Case Records
@@ -335,6 +446,7 @@ def ovc_dashboard(request):
         ovc_summ['f3'] = svf
         dash['ovc_summary'] = ovc_summ
         # Case categories Top 5
+        dash['hiv_status'] = get_ovc_hiv_status(request,org_ids)
         cases = OVCEligibility.objects.filter(
             person_id__in=child_ids)
         case_criteria = cases.values(

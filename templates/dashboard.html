@@ -205,7 +205,7 @@ National
 				<div class="stats-info">
 					<h4 id="rpt_16">PENDING CASES</h4>
 					<p>{{ data.pending }}</p>
-					{% for hiv_stats in data.hiv_status %}
+					{% for hiv_stats in ovc.hiv_status %}
 						<input type="hidden"  name="ovc_unknown_count" value={{hiv_stats.ovc_unknown_count}}/>
 						<input type="hidden"  name="on_art" value={{hiv_stats.on_art}}/>
 						<input type="hidden"  name="ovc_HSTP" value={{hiv_stats.ovc_HSTP}}/>
