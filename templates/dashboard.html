@@ -268,9 +268,9 @@ National
 				</div>
 			</div>
 		</div>
-
+		<!--HIV status graph -->
 		<div class="col-md-2">
-	        <div class="panel panel-inverse" data-sortable-id="index-7">
+	        <div class="panel panel-inverse" data-sortable-id="index-8">
 				<div class="panel-heading">
 					<div class="panel-heading-btn">
 						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
@@ -279,14 +279,7 @@ National
 					<h4 class="panel-title">Cacade 90-90-90</h4>
 				</div>
 				<div class="panel-body">
-					{% if request.session.reg_ovc or request.user.is_superuser %}
 					<div id="test-flot" class="height-sm"></div>
-					<!--<div id="donut-chart" class="height-sm"></div>-->
-					{% else %}
-					<!--<div id="stacked-chart" class="height-sm"></div>-->
-					<div id="donut-chart" class="height-sm"></div>
-
-					{% endif %}
 				</div>
 			</div>
 		</div>
@@ -420,9 +413,15 @@ National
 		});
 
 	add_ovc_HST_stats();
-	function add_ovc_HST_stats(){
-			// Add  hiv stats to dashboard
 
+	function showTooltip2(x, y, contents) {
+        $('<div id="tooltip2" class="flot-tooltip">' + contents + '</div>').css( {
+            top: y,
+				left: x + 35
+			}).appendTo("body").fadeIn(200);
+		}
+
+	function add_ovc_HST_stats(){
 			var ticksLabel = [
 				[0, "Known"], [1, "ART <br/>Status"], [2, "Viral <br/>Load"]
 			];
@@ -467,7 +466,6 @@ National
 			var not_on_art = [[1, parseInt(ov5)]] ;
 
 			var data3= [
-
 						{data: ovc_HSTP, color: blueDark, label: 'Positive', bars: { fillColor: blueDark } } ,
 						{ data: ovc_HSTN, color: '#0d4a73', label: 'Negative', bars: { fillColor: '#0d4a73' } },
 						{ data: unknown_count, color: red, label: 'Unknown Status', bars: { fillColor: red } },
@@ -489,25 +487,20 @@ National
 					if (previousXValue != item.series.label || y != previousYValue) {
 						previousXValue = item.series.label;
 						previousYValue = y;
-						$("#tooltip").remove();
+						$("#tooltip2").remove();
 
 						showTooltip2(item.pageX, item.pageY, y + " " + item.series.label);
 					}
 				}
 				else {
-					$("#tooltip").remove();
+					$("#tooltip2").remove();
 					previousXValue = null;
 					previousYValue = null;
 				}
 			});
 	}
 
-	function showTooltip2(x, y, contents) {
-        $('<div id="tooltip" class="flot-tooltip">' + contents + '</div>').css( {
-            top: y,
-				left: x
-			}).appendTo("body").fadeIn(200);
-		}
+
 
 </script>
 {% endblock %}
