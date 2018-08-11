@@ -127,35 +127,35 @@ def get_normal_user_hiv_dashboard_stats(request,org_ids):
     with connection.cursor() as cursor:
         try:
             cursor.execute(
-                "Select count(*)  from ovc_registration where child_cbo_id in ({0})".format(ids)
+                "Select count(person_id)  from ovc_registration where child_cbo_id in ({0})".format(ids)
             )
             row = cursor.fetchone()
             ovc_reg_all_count = row[0]
 
             cursor.execute(
-                "select count(*) from ovc_registration where hiv_status='HSTP' or hiv_status= 'HSTN' and child_cbo_id in ({0})".format(ids)
+                "select count(person_id) from ovc_registration where (hiv_status='HSTP' or hiv_status= 'HSTN') and child_cbo_id in ({0})".format(ids)
             )
+
             row = cursor.fetchone()
             ovc_reg_known_count = row[0]
 
             cursor.execute(
-                "select count(*) from ovc_registration where hiv_status = 'HSTP' and child_cbo_id in ({0})".format(ids)
+                "select count(person_id) from ovc_registration where hiv_status = 'HSTP' and child_cbo_id in ({0})".format(ids)
             )
             row = cursor.fetchone()
             ovc_HSTP = row[0]
 
             ovc_unknown_count = ovc_reg_all_count - ovc_reg_known_count
 
-
             cursor.execute(
-                "select count(*) from ovc_registration where art_status='ARAR' and child_cbo_id in ({0})".format(ids)
+                "select count(person_id) from ovc_registration where art_status='ARAR' and child_cbo_id in ({0})".format(ids)
 
             )
             row = cursor.fetchone()
             on_art = row[0]
 
             cursor.execute(
-                "select  count(*) from ovc_registration where  hiv_status = 'HSTN' and child_cbo_id in ({0})".format(ids)
+                "select  count(person_id) from ovc_registration where  hiv_status = 'HSTN' and child_cbo_id in ({0})".format(ids)
             )
             row = cursor.fetchone()
             ovc_HSTN = row[0]
@@ -170,6 +170,7 @@ def get_normal_user_hiv_dashboard_stats(request,org_ids):
 def get_ovc_hiv_status(request,org_ids):
     hiv_status={}
     hiv_status_list_envelop=[]
+    print "The organisation unit {} #".format(org_ids)
     if request.user.is_superuser:
         hiv_stats = get_super_user_hiv_dashboard_stats(request,org_ids)
     else:
@@ -318,6 +319,7 @@ def ovc_dashboard(request):
         org_id = int(cbo_id)
         org_ids = get_orgs_child(org_id)
         print 'dash orgs', org_ids
+        dash['hiv_status'] = get_ovc_hiv_status(request, org_ids)
         # Get org units
         orgs_count = len(org_ids) - 1 if len(org_ids) > 1 else 1
         dash['org_units'] = orgs_count
@@ -471,7 +473,7 @@ def ovc_dashboard(request):
         ovc_summ['f3'] = svf
         dash['ovc_summary'] = ovc_summ
         # Case categories Top 5
-        dash['hiv_status'] = get_ovc_hiv_status(request,org_ids)
+
         cases = OVCEligibility.objects.filter(
             person_id__in=child_ids)
         case_criteria = cases.values(
