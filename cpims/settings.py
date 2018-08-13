@@ -100,7 +100,6 @@ STATIC_URL = '/static/'
 DOCUMENTS_URL = '/documents/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'reports')
-
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"), )
 
 AUTH_USER_MODEL = 'cpovc_auth.AppUser'
