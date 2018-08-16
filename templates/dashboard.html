@@ -275,7 +275,7 @@ National
 		</div>
 
 
-		<!--HIV status graph -->
+		<!--Domain HIV Status -->
 		<div class="col-md-4">
 	        <div class="panel panel-inverse" data-sortable-id="index-9">
 				<div class="panel-heading">
@@ -283,7 +283,7 @@ National
 						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
 						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
 					</div>
-					<h4 class="panel-title">Domain HIV Status</h4>
+					<h4 class="panel-title">ART Status</h4>
 				</div>
 				<div class="panel-body">
 					<div id="domain_hiv_status" class="height-sm"></div>
@@ -291,6 +291,21 @@ National
 			</div>
 		</div>
 
+		<!--Domain HIV Status -->
+		<div class="col-md-4">
+	        <div class="panel panel-inverse" data-sortable-id="index-10">
+				<div class="panel-heading">
+					<div class="panel-heading-btn">
+						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+					</div>
+					<h4 class="panel-title">HIV Status</h4>
+				</div>
+				<div class="panel-body">
+					<div id="domain_hiv_status_negative" class="height-sm"></div>
+				</div>
+			</div>
+		</div>
 
 		{% for hiv_stats in ovc.hiv_status %}
 		<input type="hidden"  name="ovc_unknown_count" value={{hiv_stats.ovc_unknown_count}}/>
@@ -518,9 +533,6 @@ National
 			var not_on_art_rate = $('[name="not_on_art_rate"]').val();
 			var ovc_unknown_count_rate = $('[name="ovc_unknown_count_rate"]').val();
 
-			console.log("gotototog 2");
-			console.log(not_on_art_rate);
-
 			parsed_ovc_HSTP_rate=parseFloat(ovc_HSTP_rate.replace("/", "")).toFixed(2)
 			parsed_ovc_HSTN_rate=parseFloat(ovc_HSTN_rate.replace("/", "")).toFixed(2)
 			parsed_ovc_unknown_count_rate=parseFloat(ovc_unknown_count_rate.replace("/", "")).toFixed(2)
@@ -530,10 +542,6 @@ National
 			parsed_not_suppresed_rate=parseFloat(not_suppresed_rate.replace("/", "")).toFixed(2)
 			parsed_suppresed_rate=parseFloat(suppresed_rate.replace("/", "")).toFixed(2)
 
-
-			console.log("gotototog");
-			console.log(parsed_not_on_art_rate);
-
 			var ovc_HSTP_r=[[0, parsed_ovc_HSTP_rate]] ;
 			var ovc_HSTN_r=[[0, parsed_ovc_HSTN_rate]] ;
 			var unknown_count_r=[[0, parsed_ovc_unknown_count_rate]] ;
@@ -541,14 +549,6 @@ National
 			var not_on_art_r=[[1, parsed_not_on_art_rate]] ;
 			var suppresed_r=[[2, parsed_not_suppresed_rate]] ;
 			var not_suppresed_r=[[2, parsed_suppresed_rate]] ;
-
-			/*var hivPositive="Positive<br/>"+ ovc_HSTP_rate.replace("/", "") + "%";
-			var hivNegative="Negative<br/>"+ ovc_HSTN_rate.replace("/", "") + "%";
-			var unknownStatus="Unknown Status<br/>"+ ovc_unknown_count_rate.replace("/", "") + "%";
-			var onART="On ART<br/>"+ on_art_rate.replace("/", "") + "%";
-			var notOnART="Not on ART<br/>"+ not_on_art_rate.replace("/", "") + "%";
-			var suppressed="Suppressed<br/>"+ suppresed_rate.replace("/", "") + "%";
-			var notSuppressed="Not Suppressed<br/>"+ not_suppresed_rate.replace("/", "") + "%";*/
 
 			var data3= [
 						{data: ovc_HSTP_r, color: blueDark, label: '% <br/>'+$('[name="ovc_HSTP"]').val()+'<br/> Positive', bars: { fillColor: blueDark } } ,
