@@ -1721,7 +1721,7 @@ WHEN  date_part('year', age(reg_person.date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[
 WHEN  date_part('year', age(reg_person.date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
 WHEN  date_part('year', age(reg_person.date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
 WHEN  date_part('year', age(reg_person.date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
-ELSE 'g.[25+yrs]' END AS AgeRange, reg_person.sex_id,'F1A Assessments ' || ' '  as Indicator
+ELSE 'g.[25+yrs]' END AS AgeRange, reg_person.sex_id,'F1A Priority ' || ' '  as Indicator
 FROM  (SELECT area_id, area_name, area_code, parent_area_id
         FROM   list_geo AS list_geo_1) AS derivedtbl_1 INNER JOIN
          list_geo ON derivedtbl_1.area_id = list_geo.parent_area_id RIGHT OUTER JOIN
