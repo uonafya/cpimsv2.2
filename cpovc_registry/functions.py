@@ -20,6 +20,9 @@ from cpovc_auth.models import CPOVCUserRoleGeoOrg
 from cpovc_forms.models import (
     OVCCaseRecord, OVCCaseCategory, OVCCaseGeo, OVCCareServices)
 
+from cpovc_reports.functions import run_sql_data
+from cpovc_reports.queries import QUERIES
+
 from django.db import connection
 
 organisation_id_prefix = 'U'
@@ -215,6 +218,67 @@ def get_ovc_hiv_status(request,org_ids):
     return hiv_status_list_envelop
 
 
+
+def get_ovc_domain_hiv_status(request,org_ids):
+
+    hiv_domain_status = {}
+    hiv_domain_status_list_envelop = []
+    cbos=""
+    try:
+        datas=[]
+        # HIVSTAT
+        if len(org_ids)==1:
+            if org_ids[0]==0:
+                cbos="(select child_cbo_id from ovc_registration)"
+        else:
+            cbos = ','.join(str(v) for v in org_ids)
+            cbos= '{}{}{}'.format('(',cbos,')')
+
+        sql = QUERIES['datim_4'].format(**{'cbos': cbos})
+        print sql
+        rows, desc = run_sql_data(None, sql)
+
+        sql2 = QUERIES['datim_5'].format(**{'cbos': cbos})
+        rows2, desc2 = run_sql_data(None, sql2)
+        datas = datas + rows + rows2
+
+        for x in datas:
+            # print i ," ",x['DOMAIN']
+            domain = x['DOMAIN']
+            gender = x['GENDER']
+            if "2a. (i) OVC_HIVSTAT: HIV+" in domain and gender == 'Female':
+                hiv_domain_status['hiv_positive_f'] = x['OVCCOUNT']
+            elif "2a. (ii) OVC_HIVSTAT: HIV+ on ARV" in domain and gender == 'Female':
+                hiv_domain_status['HIV_positive_on_arv_f'] = x['OVCCOUNT']
+            elif "2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV" in domain and gender == 'Female':
+                hiv_domain_status['HIV_positive_not_on_arv_f'] = x['OVCCOUNT']
+            elif "2b. OVC_HIVSTAT: HIV-" in domain and gender == 'Female':
+                hiv_domain_status['HIV_negative_f'] = x['OVCCOUNT']
+            elif "2c. OVC_HIVSTAT: HIV Status NOT Known" in domain and gender == 'Female':
+                hiv_domain_status['HIV_unknown_status_f'] = x['OVCCOUNT']
+
+            elif "2a. (i) OVC_HIVSTAT: HIV+" in domain and gender == 'Male':
+                hiv_domain_status['hiv_positive_m'] = x['OVCCOUNT']
+            elif "2a. (ii) OVC_HIVSTAT: HIV+ on ARV" in domain and gender == 'Male':
+                hiv_domain_status['HIV_positive_on_arv_m'] = x['OVCCOUNT']
+            elif "2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV" in domain and gender == 'Male':
+                hiv_domain_status['HIV_positive_not_on_arv_m'] = x['OVCCOUNT']
+            elif "2b. OVC_HIVSTAT: HIV-" in domain and gender == 'Male':
+                hiv_domain_status['HIV_negative_m'] = x['OVCCOUNT']
+            elif "2c. OVC_HIVSTAT: HIV Status NOT Known" in domain and gender == 'Male':
+                hiv_domain_status['HIV_unknown_status_m'] = x['OVCCOUNT']
+            else:
+                pass
+
+        hiv_domain_status_list_envelop.append(hiv_domain_status)
+
+    except Exception, e:
+        print 'datim error - %s' % (str(e))
+        raise e
+    else:
+        return hiv_domain_status_list_envelop
+
+
 def dashboard():
     """Method to get dashboard totals."""
     try:
@@ -320,6 +384,8 @@ def ovc_dashboard(request):
         org_ids = get_orgs_child(org_id)
         print 'dash orgs', org_ids
         dash['hiv_status'] = get_ovc_hiv_status(request, org_ids)
+        dash['domain_hiv_status'] = get_ovc_domain_hiv_status(request, org_ids)
+
         # Get org units
         orgs_count = len(org_ids) - 1 if len(org_ids) > 1 else 1
         dash['org_units'] = orgs_count

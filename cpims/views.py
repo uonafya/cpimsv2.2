@@ -37,6 +37,7 @@ def home(request):
         ovc['pending'] = '{:08}'.format(odash['pending_cases'])
         ovc['household'] = 0
         ovc['hiv_status'] = odash['hiv_status']
+        ovc['domain_hiv_status'] = odash['domain_hiv_status']
         child_regs = odash['child_regs']
         ovc_regs = odash['ovc_regs']
         case_regs = odash['case_regs']

@@ -274,6 +274,24 @@ National
 			</div>
 		</div>
 
+
+		<!--HIV status graph -->
+		<div class="col-md-4">
+	        <div class="panel panel-inverse" data-sortable-id="index-9">
+				<div class="panel-heading">
+					<div class="panel-heading-btn">
+						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+						<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+					</div>
+					<h4 class="panel-title">Domain HIV Status</h4>
+				</div>
+				<div class="panel-body">
+					<div id="domain_hiv_status" class="height-sm"></div>
+				</div>
+			</div>
+		</div>
+
+
 		{% for hiv_stats in ovc.hiv_status %}
 		<input type="hidden"  name="ovc_unknown_count" value={{hiv_stats.ovc_unknown_count}}/>
 		<input type="hidden"  name="on_art" value={{hiv_stats.on_art}}/>
@@ -283,7 +301,6 @@ National
 		<input type="hidden"  name="suppresed" value={{hiv_stats.suppresed}}/>
 		<input type="hidden"  name="not_suppresed" value={{hiv_stats.not_suppresed}}/>
 
-
 		<input type="hidden"  name="ovc_unknown_count_rate" value={{hiv_stats.ovc_unknown_count_rate}}/>
 		<input type="hidden"  name="on_art_rate" value={{hiv_stats.on_art_rate}}/>
 		<input type="hidden"  name="ovc_HSTP_rate" value={{hiv_stats.ovc_HSTP_rate}}/>
@@ -291,6 +308,22 @@ National
 		<input type="hidden"  name="not_on_art_rate" value={{hiv_stats.not_on_art_rate}}/>
 		<input type="hidden"  name="suppresed_rate" value={{hiv_stats.suppresed_rate}}/>
 		<input type="hidden"  name="not_suppresed_rate" value={{hiv_stats.not_suppresed_rate}}/>
+		<!--<div id="test-flot" style="width: 200px;height: 70px"></div>-->
+		{% endfor %}
+
+		{% for domain_hiv_status in ovc.domain_hiv_status %}
+		<input type="hidden"  name="hiv_positive_f" value={{domain_hiv_status.hiv_positive_f}}/>
+		<input type="hidden"  name="HIV_positive_on_arv_f" value={{domain_hiv_status.HIV_positive_on_arv_f}}/>
+		<input type="hidden"  name="HIV_positive_not_on_arv_f" value={{domain_hiv_status.HIV_positive_not_on_arv_f}}/>
+		<input type="hidden"  name="HIV_negative_f" value={{domain_hiv_status.HIV_negative_f}}/>
+		<input type="hidden"  name="HIV_unknown_status_f" value={{domain_hiv_status.HIV_unknown_status_f}}/>
+
+
+		<input type="hidden"  name="hiv_positive_m" value={{domain_hiv_status.hiv_positive_m}}/>
+		<input type="hidden"  name="HIV_positive_on_arv_m" value={{domain_hiv_status.HIV_positive_on_arv_m}}/>
+		<input type="hidden"  name="HIV_positive_not_on_arv_m" value={{domain_hiv_status.HIV_positive_not_on_arv_m}}/>
+		<input type="hidden"  name="HIV_negative_m" value={{domain_hiv_status.HIV_negative_m}}/>
+		<input type="hidden"  name="HIV_unknown_status_m" value={{domain_hiv_status.HIV_unknown_status_m}}/>
 		<!--<div id="test-flot" style="width: 200px;height: 70px"></div>-->
 		{% endfor %}
 
@@ -357,6 +390,7 @@ National
         var OFdata = [{% autoescape off %}{{ ofvals }}{% endautoescape %}];
     </script>
     <script src="{% static 'js/dashboard.js' %}"></script>
+	<script src="{% static 'js/domain_hiv_status.js' %}"></script>
     <script src="{% static 'plugins/datatables/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'plugins/datatables/js/dataTables.bootstrap.min.js' %}"></script>
     <script src="{% static 'plugins/datatables/js/dataTables.buttons.min.js' %}"></script>
@@ -420,9 +454,11 @@ National
 		    } );
 		       return false;
 		    });
-		});
 
-	add_ovc_HST_stats();
+
+
+
+		    add_ovc_HST_stats();
 
 	function showTooltip2(x, y, contents) {
         $('<div id="tooltip2" class="flot-tooltip">' + contents + '</div>').css( {
@@ -527,6 +563,12 @@ National
 				}
 			});
 	}
+
+
+
+		});
+
+
 
 
 
