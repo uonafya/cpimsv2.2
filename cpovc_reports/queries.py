@@ -30,7 +30,7 @@ select * from master_list where cbo_id in ({cbos})
 '''
 
 QUERIES['beneficiary_list'] = '''
-SELECT cbo_id, vw_cpims_registration.cbo,cbo_id, vw_cpims_registration.ward_id, vw_cpims_registration.ward,  vw_cpims_registration.county, cpims_ovc_id,
+SELECT cbo_id, vw_cpims_registration.cbo, vw_cpims_registration.ward_id, vw_cpims_registration.ward,  vw_cpims_registration.county, cpims_ovc_id,
        ovc_names, gender, dob, birthcert, bcertnumber, ovcdisability, 
        ncpwdnumber, ovchivstatus, artstatus, facility_id, facility, 
        date_of_linkage, ccc_number, chv_id, chv_names,
@@ -39,14 +39,14 @@ SELECT cbo_id, vw_cpims_registration.cbo,cbo_id, vw_cpims_registration.ward_id, 
        exit_date, immunization,item_description as PriorityNeed,'-' as Quantity, '-' as Received_Yes_NO,'-' as DateReceived, '-' as ParentSignature
   FROM vw_cpims_registration
 INNER JOIN vw_cpims_priorityneeds ON vw_cpims_registration.cpims_ovc_id = vw_cpims_priorityneeds.person_id
-WHERE  cbo_id in ({cbos}) AND date_of_event between '{start_date}' and '{end_date}'
+where ovc_registration.child_cbo_id in ({cbos}) AND date_of_event between '{start_date}' and '{end_date}'
 and  ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
 	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
 	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 	and not
-			(vw_cpims_Registration.schoollevel in
+			(vw_cpims_Registration.schoollevel not in
 			(select distinct school_level
 					from ovc_registration
 					where school_level in
@@ -148,42 +148,203 @@ order by child_chv_id ASC, reg_person.date_of_birth ASC;'''
 
 # PEPFAR
 QUERIES['pepfar'] = '''
-select
-cast(count(distinct ovc_care_events.person_id) as integer) as OVCCount,
-reg_org_unit.org_unit_name AS CBO,
-list_geo.area_name as ward, scc.area_name as constituency, cc.area_name as county,
-date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) AS age,
-CASE
-WHEN date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) < 1 THEN 'a.[<1yrs]'
-WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
-WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
-WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
-WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
-WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
-ELSE 'g.[25+yrs]' END AS AgeRange,
-CASE reg_person.sex_id WHEN 'SFEM' THEN 'Female' ELSE 'Male' END AS Gender,
-CASE ovc_care_services.service_provided
-WHEN 'HC1S' THEN 'Health' {domains}
-ELSE 'Unknown'
-END AS Domain
-from ovc_care_services
-INNER JOIN ovc_care_events ON ovc_care_events.event=ovc_care_services.event_id
-INNER JOIN reg_person ON ovc_care_events.person_id=reg_person.id
-LEFT OUTER JOIN ovc_registration ON ovc_care_events.person_id=ovc_registration.person_id
-LEFT OUTER JOIN reg_org_unit ON reg_org_unit.id=ovc_registration.child_cbo_id
-LEFT OUTER JOIN reg_persons_geo ON reg_persons_geo.person_id=ovc_registration.person_id and reg_persons_geo.area_id > 337
-LEFT OUTER JOIN list_geo ON list_geo.area_id=reg_persons_geo.area_id
-left outer join list_geo as scc on scc.area_id=list_geo.parent_area_id
-left outer join list_geo as cc on cc.area_id=scc.parent_area_id
-WHERE reg_persons_geo.is_void = False
-and ovc_care_services.is_void = False
-and ovc_care_events.event_type_id='FSAM'
-and ovc_care_events.date_of_event between '{start_date}' and '{end_date}'
-and ovc_registration.child_cbo_id in ({cbos})
-GROUP BY ovc_care_services.service_provided, reg_person.date_of_birth,
-reg_person.sex_id, ovc_registration.child_cbo_id,
-reg_org_unit.org_unit_name, reg_persons_geo.area_id,
-ward, constituency, county;'''
+select 
+CAST(COUNT(DISTINCT cpims_ovc_id) AS integer) AS OVCCount,
+CBO,cbo_id
+into TEMP temp_Actives
+from vw_cpims_Registration
+where ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
+	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'   and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'   and exit_date between '{start_date}' and '{end_date}' )
+
+AND cbo_id in ({cbos})
+										)
+	and not
+			(vw_cpims_Registration.schoollevel not in
+			(select distinct school_level
+					from ovc_registration
+					where school_level in
+			(SELECT item_id
+			 FROM list_general
+			 where item_category = 'School Level'))
+				and
+					vw_cpims_Registration.age > 17
+					and vw_cpims_registration.cbo_id in ({cbos})
+					)
+	group by 	CBO,cbo_id ;	
+
+
+-- Services
+SELECT CAST(COUNT(DISTINCT person_id) AS integer) AS OVCCount, CBO, ward, County,AgeRange,
+tbl_pepfar.cboid,tbl_pepfar.countyid,CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 'Male' END AS Gender,derived_Actives.CboActive,
+CASE 
+WHEN CAST(COUNT(DISTINCT domain) AS integer) between 1 and 2 then '1or2 Services'
+WHEN CAST(COUNT(DISTINCT domain) AS integer) > 2 then '3orMore Services'
+ELSE '1or2 Services'
+END AS NumberofServices
+into TEMP temp_pepfarsummary
+	FROM	(SELECT person_id, CBO,cboid, ward, item_description,
+		County,
+		sex_id,
+		CASE
+		WHEN date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,Countyid,domain
+		FROM  vw_cpims_services
+		WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+		GROUP BY person_id, CBO, ward, item_description, 
+		County,sex_id,date_of_birth,cboid,Countyid,domain
+
+		UNION
+
+		--ASSESSMENTS	for Food/Health and Psychosocial counted as services
+		SELECT person_id, CBO, ward, item_description, 
+		County,
+		sex_id,
+		CASE
+		WHEN date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,Countyid,domain
+		FROM vw_cpims_assessments 
+		WHERE  cboid in ({cbos}) AND (domain in ('DHNU','DPSS'))
+		AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+		GROUP BY person_id, CBO, ward, item_description, 
+		County,
+		sex_id,date_of_birth,cboid,Countyid,domain) tbl_pepfar
+INNER JOIN
+(select ovccount as cboActive,cbo_id from temp_Actives) derived_Actives ON derived_Actives.cbo_id = tbl_pepfar.cboid
+group by CBO, ward, County,AgeRange,tbl_pepfar.cboid,tbl_pepfar.countyid,Gender,CboActive,tbl_pepfar.domain;
+
+--select records from tempPepfarsummary
+select OVCCount, CBO, ward, County,AgeRange,
+cboid,countyid, Gender,CboActive,NumberofServices
+from temp_pepfarsummary
+
+UNION
+--purge using zeros for missing data to maintain the output structure
+select DISTINCT CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
+from temp_pepfarsummary
+
+UNION
+--purge using zeros for missing data to maintain the output structure
+select DISTINCT CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services' AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary
+UNION
+select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
+from temp_pepfarsummary;
+'''
 
 # PEPFAR SUMMARY
 QUERIES['pepfar_summary'] = '''
@@ -392,7 +553,10 @@ ward_id
 INTO TEMP temp_ExitsGraduated
 from vw_cpims_exits
 where 	datimexitreason = 'GRADUATED'
-AND			
+
+  AND
+  vw_cpims_exits.cbo_id in ({cbos})
+	AND
 ( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
@@ -405,7 +569,13 @@ ward_id
 INTO TEMP temp_ExitsTRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER
 from vw_cpims_exits
 where 	datimexitreason = 'TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER'
-AND			
+
+  AND
+
+   vw_cpims_exits.cbo_id in ({cbos})
+
+AND
+
 ( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
@@ -418,6 +588,8 @@ ward_id
 INTO TEMP temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER
 from vw_cpims_exits
 where 	datimexitreason = 'TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER'
+  AND
+  vw_cpims_registration.cbo_id in ({cbos})
 AND			
 ( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
@@ -431,7 +603,11 @@ ward_id
 INTO TEMP temp_ExitsWITHOUT_GRADUATION
 from vw_cpims_exits
 where 	datimexitreason = 'WITHOUT_GRADUATION'
-AND			
+AND
+
+  vw_cpims_exits.cbo_id in ({cbos})
+
+  AND
 ( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
@@ -439,80 +615,85 @@ AND
 GROUP BY ward_id;
 
 --Datim Services
-SELECT DISTINCT person_id as ovcid, CBO, ward, County,AgeRange,
-tbl_pepfar.ward_id,tbl_pepfar.countyid,CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 'Male' END AS Gender
-INTO  TEMP temp_DatimServices
-FROM
-(SELECT person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
-	vw_cpims_Registration.County,
-	sex_id,
-	CASE
-	WHEN date_part('year', age(date_of_birth)) < 1 THEN 'a.[<1yrs]'
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
-	ELSE 'g.[25+yrs]' END AS AgeRange,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
-	FROM  vw_cpims_services
-	inner join vw_cpims_Registration on vw_cpims_services.person_id = vw_cpims_Registration.cpims_ovc_id
-	WHERE (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
-and ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
-or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
-									)
-and not
-		(vw_cpims_Registration.schoollevel not in
-		(select distinct school_level
-				from ovc_registration
-				where school_level in
-		(SELECT item_id
-		 FROM list_general
-		 where item_category = 'School Level'))
-			and
-				vw_cpims_Registration.age > 17
-				)
-	GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
-	vw_cpims_Registration.County,sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
-
-	UNION
-
-	--ASSESSMENTS	for Food/Health and Psychosocial counted as services
-	SELECT person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
-	vw_cpims_Registration.County,
-	sex_id,
-	CASE
-	WHEN date_part('year', age(date_of_birth)) < 1 THEN 'a.[<1yrs]'
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
-	WHEN  date_part('year', age(date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
-	ELSE 'g.[25+yrs]' END AS AgeRange,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
-	FROM vw_cpims_assessments
-	inner join vw_cpims_Registration on vw_cpims_assessments.person_id = vw_cpims_Registration.cpims_ovc_id
-	WHERE (domain in ('DHNU','DPSS')) 
-	AND (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
+	SELECT DISTINCT person_id as ovcid, CBO, ward, County,AgeRange,
+	tbl_pepfar.ward_id,tbl_pepfar.countyid,CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 'Male' END AS Gender
+	INTO  TEMP temp_DatimServices
+	FROM
+	(SELECT person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
+		vw_cpims_Registration.County,
+		sex_id,
+		CASE
+		WHEN date_part('year', age(date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
+		FROM  vw_cpims_services
+		inner join vw_cpims_Registration on vw_cpims_services.person_id = vw_cpims_Registration.cpims_ovc_id
+		WHERE vw_cpims_services.cboid in ({cbos}) AND (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
 	and ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
-or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
-									)
-and not
-		(vw_cpims_Registration.schoollevel not in
-		(select distinct school_level
-				from ovc_registration
-				where school_level in
-		(SELECT item_id
-		 FROM list_general
-		 where item_category = 'School Level'))
-			and
-				vw_cpims_Registration.age > 17
-				)
-	GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
-	vw_cpims_Registration.County,
-	sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain) tbl_pepfar
+	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+										)
+	and not
+			(vw_cpims_Registration.schoollevel not in
+			(select distinct school_level
+					from ovc_registration
+					where school_level in
+			(SELECT item_id
+			 FROM list_general
+			 where item_category = 'School Level'))
+				and
+					vw_cpims_Registration.age > 17
+          AND
+          vw_cpims_registration.cbo_id in ({cbos})
+					)
+		GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
+		vw_cpims_Registration.County,sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
+
+		UNION
+
+		--ASSESSMENTS	for Food/Health and Psychosocial counted as services
+		SELECT person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
+		vw_cpims_Registration.County,
+		sex_id,
+		CASE
+		WHEN date_part('year', age(date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
+		WHEN  date_part('year', age(date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
+		FROM vw_cpims_assessments
+		inner join vw_cpims_Registration on vw_cpims_assessments.person_id = vw_cpims_Registration.cpims_ovc_id
+		WHERE vw_cpims_assessments.cboid in ({cbos}) AND (domain in ('DHNU','DPSS'))
+		AND (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
+		and ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
+	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+										)
+	and not
+			(vw_cpims_Registration.schoollevel not in
+			(select distinct school_level
+					from ovc_registration
+					where school_level in
+              AND ovc_registration.child_cbo_id in ({cbos})
+
+			(SELECT item_id
+			 FROM list_general
+			 where item_category = 'School Level'))
+				and
+					vw_cpims_Registration.age > 17
+
+					)
+		GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
+		vw_cpims_Registration.County,
+		sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain) tbl_pepfar
 	
 group by ovcid,CBO, ward, County,AgeRange,tbl_pepfar.ward_id,tbl_pepfar.countyid,Gender;
 
@@ -522,7 +703,7 @@ CAST(COUNT(DISTINCT cpims_ovc_id) AS integer) AS OVCCount,
 ward,County,ward_id as wardid
 into TEMP temp_ActiveBeneficiaries
 from vw_cpims_Registration
-where ((exit_status = 'ACTIVE' and registration_date <= '{end_date}') 
+where vw_cpims_registration.cbo_id in ({cbos}) AND ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
 	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' )) 
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' ) 
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
@@ -537,6 +718,8 @@ where ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
+          AND
+          vw_cpims_registration.cbo_id in ({cbos})
 					)
 	and cpims_ovc_id in (select ovcid from temp_datimservices)
 	group by 	ward,County,ward_id ;	
@@ -549,6 +732,7 @@ SELECT DISTINCT count(ovcid) as OVCCount  , temp_DatimServices.CBO, temp_DatimSe
 	temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsWITHOUT_GRADUATION.WITHOUT_GRADUATION,'1. OVC_Serv ' || ''  as Indicator
 FROM temp_DatimServices
+
 LEFT OUTER JOIN temp_ActiveBeneficiaries
 	ON temp_DatimServices.Ward_id = temp_ActiveBeneficiaries.wardid
 LEFT OUTER JOIN temp_ExitsGraduated
@@ -564,6 +748,9 @@ group by temp_DatimServices.CBO, temp_DatimServices.ward, temp_DatimServices.Cou
 	temp_ExitsTRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsWITHOUT_GRADUATION.WITHOUT_GRADUATION
+
+
+
 
 --Hiv (+)(-) and Not known
  UNION
@@ -589,7 +776,7 @@ CASE
 WHEN artstatus = 'ART' THEN '2a. (ii) OVC_HIVSTAT: HIV+ on ARV Treatment'
 ELSE '2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV Treatment' END AS Indicator
 FROM vw_cpims_Registration
-where vw_cpims_Registration.OVChivstatus = 'POSITIVE'
+where vw_cpims_registration.cbo_id in ({cbos}) AND vw_cpims_Registration.OVChivstatus = 'POSITIVE'
 AND (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{start_date}')
 group by vw_cpims_Registration.cbo, vw_cpims_Registration.ward,
  vw_cpims_Registration.county,dob,
@@ -619,7 +806,7 @@ WHEN 'POSITIVE' THEN '2a. (i) OVC_HIVSTAT: HIV+'
 WHEN 'NEGATIVE' THEN '2b. OVC_HIVSTAT: HIV-'
 ELSE '2c. OVC_HIVSTAT: HIV Status NOT Known' END AS Indicator
 FROM vw_cpims_Registration
-where  (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{end_date}')
+where vw_cpims_registration.cbo_id in ({cbos}) AND  (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{end_date}')
 group by vw_cpims_Registration.cbo, vw_cpims_Registration.ward,
  vw_cpims_Registration.county,dob,
 	ward_id,countyid,
@@ -1547,7 +1734,7 @@ CBO,  Ward, item_description,
 County,Indicator
 FROM
 (--Assessments - F1A priority needs
-SELECT ovc_care_events.person_id, reg_org_unit.id AS cboid, reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description,
+SELECT ovc_care_events.person_id, reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description, 
 derivedtbl_1.area_name as County,
 CASE
 WHEN date_part('year', age(reg_person.date_of_birth)) < 1 THEN 'a.[<1yrs]'
@@ -1565,9 +1752,9 @@ FROM  (SELECT area_id, area_name, area_code, parent_area_id
          reg_person ON ovc_care_events.person_id = reg_person.id INNER JOIN
          list_general ON ovc_care_priority.service = list_general.item_id LEFT OUTER JOIN
          ovc_registration ON ovc_care_events.person_id = ovc_registration.person_id LEFT OUTER JOIN
-         reg_org_unit ON reg_org_unit.id = public.ovc_registration.child_cbo_id LEFT OUTER JOIN
+         reg_org_unit ON reg_org_unit.id = ovc_registration.child_cbo_id LEFT OUTER JOIN
          reg_persons_geo ON reg_persons_geo.person_id = ovc_registration.person_id ON list_geo.area_id = reg_persons_geo.area_id
-WHERE reg_org_unit.id in ({cbos}) AND (ovc_care_priority.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' and '{end_date}')
+WHERE ovc_registration.child_cbo_id in ({cbos}) AND (ovc_care_priority.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
 GROUP BY ovc_care_events.person_id,ovc_care_priority.service, reg_person.date_of_birth, reg_person.sex_id, 
 ovc_registration.child_cbo_id, reg_org_unit.org_unit_name, reg_persons_geo.area_id, list_geo.area_name, list_general.item_description,
 derivedtbl_1.area_name,date_part('year', age(reg_person.date_of_birth))
@@ -1575,7 +1762,7 @@ derivedtbl_1.area_name,date_part('year', age(reg_person.date_of_birth))
 UNION
 
 --F1A Assessments
-SELECT ovc_care_events.person_id, reg_org_unit.id, reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description,
+SELECT ovc_care_events.person_id, reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description, 
 derivedtbl_1.area_name as County,
 CASE
 WHEN date_part('year', age(reg_person.date_of_birth)) < 1 THEN 'a.[<1yrs]'
@@ -1595,7 +1782,7 @@ FROM  (SELECT area_id, area_name, area_code, parent_area_id
          ovc_registration ON ovc_care_events.person_id = ovc_registration.person_id LEFT OUTER JOIN
          reg_org_unit ON reg_org_unit.id = ovc_registration.child_cbo_id LEFT OUTER JOIN
          reg_persons_geo ON reg_persons_geo.person_id = ovc_registration.person_id ON list_geo.area_id = reg_persons_geo.area_id
-WHERE reg_org_unit.id in ({cbos}) AND (ovc_care_assessment.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
+WHERE ovc_registration.child_cbo_id in ({cbos}) AND (ovc_care_assessment.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
 GROUP BY ovc_care_events.person_id,ovc_care_assessment.service, reg_person.date_of_birth, reg_person.sex_id, 
 ovc_registration.child_cbo_id, reg_org_unit.org_unit_name, reg_persons_geo.area_id, list_geo.area_name, list_general.item_description,
 derivedtbl_1.area_name,date_part('year', age(reg_person.date_of_birth))
@@ -1604,7 +1791,7 @@ derivedtbl_1.area_name,date_part('year', age(reg_person.date_of_birth))
 UNION
 
 --F1A Services
-SELECT ovc_care_events.person_id,reg_org_unit.id , reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description,
+SELECT ovc_care_events.person_id, reg_org_unit.org_unit_name AS CBO, list_geo.area_name AS ward, list_general.item_description, 
 derivedtbl_1.area_name as County,
 CASE
 WHEN date_part('year', age(reg_person.date_of_birth)) < 1 THEN 'a.[<1yrs]'
@@ -1624,9 +1811,8 @@ FROM  (SELECT area_id, area_name, area_code, parent_area_id
          ovc_registration ON ovc_care_events.person_id = ovc_registration.person_id LEFT OUTER JOIN
          reg_org_unit ON reg_org_unit.id = ovc_registration.child_cbo_id LEFT OUTER JOIN
          reg_persons_geo ON reg_persons_geo.person_id = ovc_registration.person_id ON list_geo.area_id = reg_persons_geo.area_id
-WHERE reg_org_unit.id IN ({cbos}) AND (ovc_care_services.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
-AND ovc_registration.child_cbo_id in ({cbos})
-GROUP BY ovc_care_events.person_id,ovc_care_services.service_provided, reg_person.date_of_birth, reg_person.sex_id,
+WHERE ovc_registration.child_cbo_id in ({cbos}) AND ovc_registration.child_cbo_id in ({cbos}) AND (ovc_care_services.is_void = 'False') AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY ovc_care_events.person_id,ovc_care_services.service_provided, reg_person.date_of_birth, reg_person.sex_id, 
 ovc_registration.child_cbo_id, reg_org_unit.org_unit_name, reg_persons_geo.area_id, list_geo.area_name, list_general.item_description,
 derivedtbl_1.area_name,date_part('year', age(reg_person.date_of_birth))
 ) as tbl_F1ASummary
