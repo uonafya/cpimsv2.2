@@ -553,14 +553,11 @@ count(distinct person_id) as WardGraduated,
 ward_id
 INTO TEMP temp_ExitsGraduated
 from vw_cpims_exits
-where 	datimexitreason = 'GRADUATED'
-
-  AND
-  vw_cpims_exits.cbo_id in ({cbos})
-	AND
-( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+where cbo_id in ({cbos}) AND 	datimexitreason = 'GRADUATED'
+AND			
+( (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 GROUP BY ward_id;
 
@@ -569,17 +566,11 @@ count(distinct person_id) as TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER,
 ward_id
 INTO TEMP temp_ExitsTRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER
 from vw_cpims_exits
-where 	datimexitreason = 'TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER'
-
-  AND
-
-   vw_cpims_exits.cbo_id in ({cbos})
-
-AND
-
-( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+where cbo_id in ({cbos}) AND	datimexitreason = 'TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER'
+AND			
+( (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 GROUP BY ward_id;
 
@@ -588,13 +579,11 @@ count(distinct person_id) as TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER,
 ward_id
 INTO TEMP temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER
 from vw_cpims_exits
-where 	datimexitreason = 'TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER'
-  AND
-  vw_cpims_exits.cbo_id in ({cbos})
+where cbo_id in ({cbos}) AND	datimexitreason = 'TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER'
 AND			
-( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+( (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 GROUP BY ward_id;
 
@@ -603,20 +592,13 @@ count(distinct person_id) as WITHOUT_GRADUATION,
 ward_id
 INTO TEMP temp_ExitsWITHOUT_GRADUATION
 from vw_cpims_exits
-where 	datimexitreason = 'WITHOUT_GRADUATION'
-AND
-
-  vw_cpims_exits.cbo_id in ({cbos})
-
-  AND
-( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+where cbo_id in ({cbos}) AND	datimexitreason = 'WITHOUT_GRADUATION'
+AND			
+( (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 GROUP BY ward_id;
-
-
-
 
 --Datim Services
 	SELECT DISTINCT person_id as ovcid, CBO, ward, County,AgeRange,
@@ -636,11 +618,11 @@ GROUP BY ward_id;
 		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
 		FROM  vw_cpims_services
 		inner join vw_cpims_Registration on vw_cpims_services.person_id = vw_cpims_Registration.cpims_ovc_id
-		WHERE vw_cpims_services.cboid in ({cbos}) AND (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
+		WHERE vw_cpims_services.cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
 	and ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
-	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 	and not
 			(vw_cpims_Registration.schoollevel not in
@@ -652,7 +634,6 @@ GROUP BY ward_id;
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
-
 					)
 		GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
 		vw_cpims_Registration.County,sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
@@ -674,25 +655,22 @@ GROUP BY ward_id;
 		FROM vw_cpims_assessments
 		inner join vw_cpims_Registration on vw_cpims_assessments.person_id = vw_cpims_Registration.cpims_ovc_id
 		WHERE vw_cpims_assessments.cboid in ({cbos}) AND (domain in ('DHNU','DPSS'))
-		AND (date_of_event BETWEEN '{datim_start_date}' AND '{end_date}')
+		AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
 		and ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
-	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 	and not
 			(vw_cpims_Registration.schoollevel not in
 			(select distinct school_level
 					from ovc_registration
 					where school_level in
-
-
 			(SELECT item_id
 			 FROM list_general
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
-
 					)
 		GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
 		vw_cpims_Registration.County,
@@ -707,9 +685,9 @@ ward,County,ward_id as wardid
 into TEMP temp_ActiveBeneficiaries
 from vw_cpims_Registration
 where vw_cpims_registration.cbo_id in ({cbos}) AND ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
-	or (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' )) 
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' ) 
-	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
+	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' )) 
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' ) 
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 	and not
 			(vw_cpims_Registration.schoollevel not in
@@ -721,7 +699,6 @@ where vw_cpims_registration.cbo_id in ({cbos}) AND ((exit_status = 'ACTIVE' and 
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
-
 					)
 	and cpims_ovc_id in (select ovcid from temp_datimservices)
 	group by 	ward,County,ward_id ;	
@@ -734,7 +711,6 @@ SELECT DISTINCT count(ovcid) as OVCCount  , temp_DatimServices.CBO, temp_DatimSe
 	temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsWITHOUT_GRADUATION.WITHOUT_GRADUATION,'1. OVC_Serv ' || ''  as Indicator
 FROM temp_DatimServices
-
 LEFT OUTER JOIN temp_ActiveBeneficiaries
 	ON temp_DatimServices.Ward_id = temp_ActiveBeneficiaries.wardid
 LEFT OUTER JOIN temp_ExitsGraduated
@@ -750,9 +726,6 @@ group by temp_DatimServices.CBO, temp_DatimServices.ward, temp_DatimServices.Cou
 	temp_ExitsTRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER.TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER,
 	temp_ExitsWITHOUT_GRADUATION.WITHOUT_GRADUATION
-
-
-
 
 --Hiv (+)(-) and Not known
  UNION
@@ -779,7 +752,7 @@ WHEN artstatus = 'ART' THEN '2a. (ii) OVC_HIVSTAT: HIV+ on ARV Treatment'
 ELSE '2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV Treatment' END AS Indicator
 FROM vw_cpims_Registration
 where vw_cpims_registration.cbo_id in ({cbos}) AND vw_cpims_Registration.OVChivstatus = 'POSITIVE'
-AND (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{start_date}')
+AND (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{datim_start_date}')
 group by vw_cpims_Registration.cbo, vw_cpims_Registration.ward,
  vw_cpims_Registration.county,dob,
 	ward_id,countyid,
@@ -808,7 +781,7 @@ WHEN 'POSITIVE' THEN '2a. (i) OVC_HIVSTAT: HIV+'
 WHEN 'NEGATIVE' THEN '2b. OVC_HIVSTAT: HIV-'
 ELSE '2c. OVC_HIVSTAT: HIV Status NOT Known' END AS Indicator
 FROM vw_cpims_Registration
-where vw_cpims_registration.cbo_id in ({cbos}) AND  (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{end_date}')
+where vw_cpims_registration.cbo_id in ({cbos}) AND (vw_cpims_Registration.exit_status = 'ACTIVE' and vw_cpims_Registration.registration_date <= '{end_date}')
 group by vw_cpims_Registration.cbo, vw_cpims_Registration.ward,
  vw_cpims_Registration.county,dob,
 	ward_id,countyid,
