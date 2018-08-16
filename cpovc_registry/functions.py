@@ -1867,26 +1867,29 @@ def search_person_ft(request, search_string, ptype, incl_dead):
         reg_ovc = request.session.get('reg_ovc', 0)
         names = search_string.split()
         person_type = str(ptype)
+        p_type = person_type
         other_filter = ''
         if person_type == 'TBVC':
             person_type = 'COVC'
             other_filter = "OR designation = 'TBVC'"
-        elif person_type == 'TBGR':
-            person_type = 'CCGV'
-        elif person_type == 'TWVL':
-            person_type = 'DVCO'
-        elif person_type == 'TWNE':
-            person_type = 'TWNE'
-            # fls = "'TTSW', 'TTME', 'TTPA', 'TNPO', 'TTPM', "
-            fls = "'EDAM', 'DSIO', 'DSPO', 'DSNP', 'DSPP', 'DSME', 'DSSW'"
-            other_filter = " OR designation in (%s)" % (fls)
-        query = ("SELECT id FROM reg_person WHERE to_tsvector"
-                 "(first_name || ' ' || surname || ' '"
-                 " || COALESCE(other_names,''))"
-                 " @@ to_tsquery('english', '%s') AND (designation = '%s'%s)"
-                 " ORDER BY date_of_birth DESC")
-        vals = ' & '.join(names)
-        sql = query % (vals, person_type, other_filter)
+        if p_type == 'TBVC':
+            query = ("SELECT id FROM reg_person WHERE to_tsvector"
+                     "(first_name || ' ' || surname || ' '"
+                     " || COALESCE(other_names,''))"
+                     " @@ to_tsquery('english', '%s') AND (designation = '%s'%s)"
+                     " ORDER BY date_of_birth DESC")
+            vals = ' & '.join(names)
+            sql = query % (vals, person_type, other_filter)
+        else:
+            # Other than OVC
+            query = ("SELECT reg_person.id as id FROM reg_person INNER JOIN reg_persons_types "
+                     " ON reg_person.id=person_id AND person_type_id = '%s' WHERE to_tsvector"
+                     "(first_name || ' ' || surname || ' '"
+                     " || COALESCE(other_names,''))"
+                     " @@ to_tsquery('english', '%s') "
+                     " ORDER BY date_of_birth DESC")
+            vals = ' & '.join(names)
+            sql = query % (p_type, vals)
         print sql
         with connection.cursor() as cursor:
             cursor.execute(sql)

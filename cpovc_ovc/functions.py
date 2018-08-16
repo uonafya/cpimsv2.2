@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.db import connection
 from .models import (
     OVCRegistration, OVCHouseHold, OVCHHMembers, OVCHealth, OVCEligibility,
-    OVCFacility, OVCSchool, OVCEducation, OVCExit)
+    OVCFacility, OVCSchool, OVCEducation, OVCExit, OVCViralload)
 from cpovc_registry.models import (
     RegPerson, RegOrgUnit, RegPersonsTypes, OVCCheckin)
 from cpovc_main.functions import convert_date
@@ -288,6 +288,9 @@ def ovc_registration(request, ovc_id, edit=0):
             elif ovc_detail.hiv_status == 'HSTP' and nhiv_status == 'HSTP':
                 edit_hiv = True
                 ovc_detail.hiv_status = nhiv_status
+            elif ovc_detail.hiv_status == 'XXXX' or not ovc_detail.hiv_status:
+                edit_hiv = True
+                ovc_detail.hiv_status = nhiv_status
         is_active = False if is_exited else True
         ovc_detail.registration_date = reg_date
         ovc_detail.has_bcert = has_bcert
@@ -517,6 +520,8 @@ def ovc_management(request):
         action_id = int(request.POST.get('action'))
         if action_id == 2:
             perform_exit(request)
+        elif action_id == 3:
+            save_viral_load(request)
     except Exception as e:
         raise e
     else:
@@ -557,3 +562,21 @@ def get_exit_org(ovc_id):
         return ''
     else:
         return org.org_unit_name
+
+
+def save_viral_load(request):
+    try:
+        ovcid = request.POST.get('ovc_id')
+        viral_date = convert_date(request.POST.get('viral_date'))
+        ldl = request.POST.get('ldl')
+        viral_value = request.POST.get('viral_value')
+        viral_load = None if ldl == 'true' else viral_value
+        # OVC Viral load
+        org, created = OVCViralload.objects.update_or_create(
+            person_id=ovcid, viral_date=viral_date,
+            defaults={'person_id': ovcid, 'viral_load': viral_load},)
+    except Exception as e:
+        print 'error exiting - %s' % (str(e))
+        raise e
+    else:
+        pass

@@ -155,12 +155,18 @@ Registration details | {{ child.first_name }} {{ child.surname }} | {{ child.age
                         <tr>
                             <td class="field">Immunization</td>
                             <td>{{ creg.immunization_status|gen_value:vals }}</td>
-                            <td class="field">HIV Status</td>
-                            <td>{{ creg.hiv_status|gen_value:vals }}</td>
                             <td class="field">School Level</td>
                             <td>{{ creg.school_level|gen_value:vals }}</td>
-                            <td></td>
-                            <td></td>
+                            <td class="field">HIV Status</td>
+                            <td>{{ creg.hiv_status|gen_value:vals }}</td>
+                            <td class="field">Suppressed</td>
+                            <td>
+                                {% if creg.hiv_status == 'HSTP' %}
+                                   {{ suppression }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
                         </tr>
                         {% if creg.hiv_status == 'HSTP' %}
                         <tr>

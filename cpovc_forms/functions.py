@@ -2,8 +2,10 @@ from cpovc_registry.functions import (
     get_client_ip, get_meta_data)
 
 from cpovc_main.functions import get_general_list, convert_date
-from cpovc_forms.models import (FormsAuditTrail, OVCCareF1B, OVCCareEvents)
+from cpovc_forms.models import (
+    FormsAuditTrail, OVCCareF1B, OVCCareEvents, OVCEducationFollowUp)
 from cpovc_ovc.functions import get_house_hold
+from .models import OVCGokBursary
 
 
 def save_audit_trail(request, params, audit_type):
@@ -117,3 +119,143 @@ def save_form1b(request, person_id, edit=0):
         return None
     else:
         return True
+
+
+def save_bursary(request, person_id):
+    """Method to save bursary details."""
+    try:
+        adm_school = request.POST.get('in_school')
+        school_id = request.POST.get('school_id')
+        county_id = request.POST.get('child_county')
+        constituency_id = request.POST.get('child_constituency')
+        sub_county = request.POST.get('child_sub_county')
+        location = request.POST.get('child_location')
+        sub_location = request.POST.get('child_sub_location')
+        village = request.POST.get('child_village')
+        nearest_school = request.POST.get('nearest_school')
+        nearest_worship = request.POST.get('nearest_worship')
+        val_in_school = request.POST.get('in_school')
+        in_school = True if val_in_school == 'AYES' else False
+        school_class = request.POST.get('school_class')
+        primary_school = request.POST.get('pri_school_name')
+        school_marks = request.POST.get('kcpe_marks')
+        father_names = request.POST.get('father_name')
+        val_father_alive = request.POST.get('father_alive')
+        father_alive = True if val_father_alive == 'AYES' else False
+        father_telephone = request.POST.get('father_contact')
+        mother_names = request.POST.get('mother_name')
+        val_mother_alive = request.POST.get('mother_alive')
+        mother_alive = True if val_mother_alive == 'AYES' else False
+        mother_telephone = request.POST.get('mother_contact')
+        guardian_names = request.POST.get('guardian_name')
+        guardian_telephone = request.POST.get('guardian_contact')
+        # 
+        guardian_relation = request.POST.get('guardian_relation')
+        val_same_household = request.POST.get('living_with')
+        same_household = True if val_same_household == 'AYES' else False
+        val_father_chronic_ill = request.POST.get('father_ill')
+        father_chronic_ill = True if val_father_chronic_ill == 'AYES' else False
+        father_chronic_illness = request.POST.get('father_illness')
+        val_father_disabled = request.POST.get('father_disabled')
+        father_disabled = True if val_father_disabled == 'AYES' else False
+        father_disability = request.POST.get('father_disability')
+        val_father_pension = request.POST.get('father_pension')
+        father_pension = True if val_father_pension == 'AYES' else False
+        father_occupation = request.POST.get('father_occupation')
+        val_mother_chronic_ill = request.POST.get('mother_ill')
+        mother_chronic_ill = True if val_mother_chronic_ill == 'AYES' else False
+        mother_chronic_illness = request.POST.get('mother_illness')
+        val_mother_disabled = request.POST.get('mother_disabled')
+        mother_disabled = True if val_mother_disabled == 'AYES' else False
+        mother_disability = request.POST.get('mother_disability')
+        val_mother_pension = request.POST.get('mother_pension')
+        mother_pension = True if val_mother_pension == 'AYES' else False
+        mother_occupation = request.POST.get('mother_occupation')
+
+        fees_amount = request.POST.get('fees_amount')
+        fees_balance = request.POST.get('balance_amount')
+        school_secondary = request.POST.get('school_name')
+        school_county_id = request.POST.get('school_county')
+        school_constituency_id = request.POST.get('school_constituency')
+        school_sub_county = request.POST.get('school_sub_county')
+        school_location = request.POST.get('school_location')
+        school_sub_location = request.POST.get('school_sub_location')
+        school_village = request.POST.get('school_village')
+        school_email = request.POST.get('school_email')
+        school_telephone = request.POST.get('school_telephone')
+        school_type = request.POST.get('school_type')
+        school_category = request.POST.get('school_category')
+        school_enrolled = request.POST.get('school_enrolled')
+
+        school_bank_id = request.POST.get('bank')
+        school_bank_branch = request.POST.get('bank_branch')
+        school_bank_account = request.POST.get('bank_account')
+        school_recommend_by = request.POST.get('recommend_principal')
+        school_recommend_date = convert_date(request.POST.get('recommend_principal_date'))
+
+        chief_recommend_by = request.POST.get('recommend_chief')
+        chief_recommend_date = convert_date(request.POST.get('recommend_chief_date'))
+        chief_telephone = request.POST.get('chief_telephone')
+        csac_approved = request.POST.get('approved_csac')
+        approved_amount = request.POST.get('approved_amount')
+        scco_name = request.POST.get('scco_name')
+        val_scco_signed = request.POST.get('signed_scco')
+        scco_signed = True if val_scco_signed == 'AYES' else False
+        scco_sign_date = convert_date(request.POST.get('date_signed_scco'))
+        csac_chair_name = request.POST.get('csac_chair_name')
+        val_csac_signed = request.POST.get('signed_csac')
+        csac_signed = True if val_csac_signed == 'AYES' else False
+        csac_sign_date = convert_date(request.POST.get('date_signed_csac'))
+        application_date = convert_date(request.POST.get('application_date'))
+        app_user_id = request.user.id
+
+        obj, created = OVCEducationFollowUp.objects.get_or_create(
+            school_id=school_id, person_id=person_id,
+            defaults={'admitted_to_school': adm_school},
+        )
+        # Save all details from the Bursary form
+        gok_bursary = OVCGokBursary(
+            person_id=person_id, county_id=county_id,
+            constituency_id=constituency_id,
+            sub_county=sub_county, location=location,
+            sub_location=sub_location, village=village,
+            nearest_school=nearest_school,
+            nearest_worship=nearest_worship, in_school=in_school,
+            school_class=school_class, primary_school=primary_school,
+            school_marks=school_marks, father_names=father_names,
+            father_alive=father_alive, father_telephone=father_telephone,
+            mother_names=mother_names, mother_alive=mother_alive,
+            mother_telephone=mother_telephone, guardian_names=guardian_names,
+            guardian_telephone=guardian_telephone,
+            guardian_relation=guardian_relation, same_household=same_household,
+            father_chronic_ill=father_chronic_ill,
+            father_chronic_illness=father_chronic_illness,
+            father_disabled=father_disabled, father_disability=father_disability,
+            father_pension=father_pension, father_occupation=father_occupation,
+            mother_chronic_ill=mother_chronic_ill,
+            mother_chronic_illness=mother_chronic_illness,
+            mother_disabled=mother_disabled, mother_disability=mother_disability,
+            mother_pension=mother_pension, mother_occupation=mother_occupation,
+            fees_amount=fees_amount, fees_balance=fees_balance,
+            school_secondary=school_secondary, school_county_id=school_county_id,
+            school_constituency_id=school_constituency_id,
+            school_sub_county=school_sub_county, school_location=school_location,
+            school_sub_location=school_sub_location,
+            school_village=school_village, school_telephone=school_telephone,
+            school_email=school_email, school_type=school_type,
+            school_category=school_category, school_enrolled=school_enrolled,
+            school_bank_id=school_bank_id, school_bank_branch=school_bank_branch,
+            school_bank_account=school_bank_account, school_recommend_by=school_recommend_by,
+            school_recommend_date=school_recommend_date, chief_recommend_by=chief_recommend_by,
+            chief_recommend_date=chief_recommend_date, chief_telephone=chief_telephone,
+            csac_approved=csac_approved, approved_amount=approved_amount,
+            ssco_name=scco_name, scco_signed=scco_signed,
+            scco_sign_date=scco_sign_date, csac_chair_name=csac_chair_name,
+            csac_signed=csac_signed, csac_sign_date=csac_sign_date,
+            app_user_id=app_user_id, application_date=application_date)
+        gok_bursary.save()
+    except Exception as e:
+        print 'Error saving bursary - %s' % (str(e))
+    else:
+        return True
+

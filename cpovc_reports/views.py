@@ -9,6 +9,7 @@ import urllib
 import string
 import mimetypes
 import calendar
+import zipfile
 import pandas as pd
 from datetime import datetime
 # from reportlab.pdfgen import canvas
@@ -16,6 +17,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import connection
 from .forms import CaseLoad, ClusterForm
 from .functions import (
     get_case_details, case_load_header, get_data_element,
@@ -42,12 +44,14 @@ from reportlab.pdfgen import canvas
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from .parameters import ORPTS
+from .parameters import ORPTS, RPTS
 
 from django.db import connection
+from cpovc_forms.models import OVCGokBursary
 
 MEDIA_ROOT = settings.MEDIA_ROOT
 DOC_ROOT = settings.DOCUMENT_ROOT
+STATIC_ROOT = settings.STATICFILES_DIRS[0]
 
 
 @login_required
@@ -227,6 +231,10 @@ def write_csv(data, file_name, params):
                                    quoting=csv.QUOTE_MINIMAL)
             csvwriter.writerows(data)
         # Save excel to flat file
+        report_id = params['report_id'] if 'report_id' in params else 1
+        s_name = RPTS[report_id] if report_id in RPTS else 1
+        vba_file = '%s/%s/vbaProject.bin' % (DOC_ROOT, s_name)
+        excel_file = ''
         if 'archive' in params:
             print file_name
             epoch_time = int(time.time())
@@ -236,13 +244,29 @@ def write_csv(data, file_name, params):
             report_details = rnames.split('_')
             s_name = '%s.%s' % (report_details[0], epoch_time)
             uid = report_details[-1]
+            fname = '%s-%s' % (uid, s_name)
             df_new = pd.read_csv(csv_file)
-            xlsx_file = '%s/xlsx/%s-%s.xlsx' % (MEDIA_ROOT, uid, s_name)
-            writer = pd.ExcelWriter(xlsx_file)
-            df_new.to_excel(writer, index=False)
+            excel_file = '%s.xlsx' % (fname)
+            xlsx_file = '%s/xlsx/%s.xlsx' % (MEDIA_ROOT, fname)
+
+            writer = pd.ExcelWriter(xlsx_file, engine='xlsxwriter')
+            df_new.to_excel(writer, sheet_name='Sheet1', index=False)
+            # This is it       
+            workbook = writer.book
+            xlsm_file = '%s/xlsx/%s.xlsm' % (MEDIA_ROOT, fname)
+            workbook.add_worksheet('Sheet2')
+            workbook.add_worksheet('Sheet3')
+            if os.path.isfile(vba_file):
+                excel_file = excel_file.replace('xlsx', 'xlsm')
+                workbook.filename = xlsm_file
+                workbook.add_vba_project(vba_file)
             writer.save()
+            writer.close()
     except Exception, e:
-        raise e
+        print 'Error creating csv Results - %s' % (str(e))
+        pass
+    else:
+        return excel_file
 
 
 def write_pdf(data, file_name):
@@ -984,48 +1008,8 @@ def reports_ovc_rawdata(request):
             for res in results[0]:
                 titles.append(res)
         print 'RID', report_ovc_id, report_id
-        if report_ovc_id == 6 and report_id == 1:
-            titles = ['OVCID', 'FIRST_NAME', 'OTHER_NAMES', 'SURNAME',
-                      'DATE_OF_BIRTH', 'AGE', 'AGE_AT_REG', 'GENDER',
-                      'REGISTRATION_DATE', 'EXIT_STATUS', 'EXIT_DATE',
-                      'EXIT_REASON', 'OVCHIVSTATUS', 'ARTSTATUS',
-                      'BIRTHCERT', 'BCERTNUMBER', 'ELIGIBILITY',
-                      'OVCDISABILITY', 'NCPWDNUMBER', 'PARENT_NAMES', 'CHW',
-                      'CBO', 'WARD', 'CONSTITUENCY', 'COUNTY', 'AGERANGE',
-                      'SCHOOLLEVEL', 'CLASS', 'SCHOOL', 'IMMUNIZATION',
-                      'ELIGIBILITY', 'DATE_LINKED', 'CCC_NUMBER', 'FACILITY',
-                      'CAREGIVERHIVSTATUS', 'CPIMS_ID']
-        if report_ovc_id == 6 and report_id == 5:
-            titles = ['CHW', 'OVCID', 'FIRST_NAME', 'OTHER_NAMES', 'SURNAME',
-                      'DATE_OF_BIRTH', 'AGE', 'AGE_AT_REG', 'GENDER',
-                      'REGISTRATION_DATE', 'EXIT_STATUS', 'EXIT_DATE',
-                      'OVCHIVSTATUS', 'ARTSTATUS', 'BIRTHCERT', 'BCERTNUMBER',
-                      'OVCDISABILITY', 'NCPWDNUMBER', 'PARENT_NAMES',
-                      'CBO', 'WARD', 'CONSTITUENCY', 'COUNTY',
-                      'AGERANGE', 'SCHOOLLEVEL', 'IMMUNIZATION']
-        if report_ovc_id == 6 and (report_id == 12 or report_id == 8):
-            titles = ['CPIMS_ID', 'NAMES', 'GENDER',
-                      'OVC_DOB', 'AGE', 'AGERANGE', 'REGISTRATION_DATE',
-                      'OVCHIVSTATUS', 'ART_STATUS', 'DATE_LINKED',
-                      'CCC_NUMBER', 'FACILITY', 'EXIT_STATUS', 'EXIT_REASON',
-                      'EXIT_DATE', 'SCHOOLLEVEL', 'DOMAIN', 'SERVICE',
-                      'DATE_OF_SERVICE', 'CBO', 'COUNTY', 'CONSTITUENCY',
-                      'WARD', 'CHW', 'CAREGIVER_ID', 'CAREGIVER', 'CAREGIVER_GENDER',
-                      'CAREGIVER_AGE', 'CAREGIVER_RELATION', 'CAREGIVERHIVSTATUS',
-                      'MOTHER_ID', 'MOTHER', 'MOTHER_ALIVE', 'MOTHER_HIV_STATUS',
-                      'FATHER_ID', 'FATHER', 'FATHER_ALIVE', 'FATHER_HIV_STATUS',]
-        if report_ovc_id == 6 and report_id == 14:
-            titles = ['CPIMS_ID', 'NAMES', 'GENDER',
-                      'OVC_DOB', 'AGE', 'AGERANGE', 'REGISTRATION_DATE',
-                      'OVCHIVSTATUS', 'ART_STATUS', 'DATE_LINKED',
-                      'CCC_NUMBER', 'FACILITY', 'EXIT_STATUS', 'EXIT_REASON',
-                      'EXIT_DATE', 'SCHOOLLEVEL', 'DOMAIN', 'ASSESSMENT',
-                      'DATE_OF_ASSESSMENT', 'CBO', 'COUNTY', 'CONSTITUENCY',
-                      'WARD', 'CHW', 'CAREGIVER_ID', 'CAREGIVER', 'CAREGIVER_GENDER',
-                      'CAREGIVER_AGE', 'CAREGIVER_RELATION', 'CAREGIVERHIVSTATUS',
-                      'MOTHER_ID', 'MOTHER', 'MOTHER_ALIVE', 'MOTHER_HIV_STATUS',
-                      'FATHER_ID', 'FATHER', 'FATHER_ALIVE', 'FATHER_HIV_STATUS',]
-        data = [titles]
+        columns = [col.lower() for col in titles]
+        data = [columns]
         print 'Results count - ', len(results)
         for res in results:
             vals = []
@@ -1036,8 +1020,8 @@ def reports_ovc_rawdata(request):
                 vals.append(val)
             data.append(vals)
         csv_file = 'tmp-%s' % (fid)
-        write_csv(data, csv_file, {'archive': True})
-        xlsm_name = ''
+        xls_name = write_csv(data, csv_file, {'archive': True, 'report_id': report_id})
+        xls = ''
         status = 9
         message = "No results matching your query."
         if len(results) > 0:
@@ -1046,11 +1030,13 @@ def reports_ovc_rawdata(request):
             if len(results) > 100000 and report_id == 12:
                 message += " File too big to render. Please download."
                 results = []
-        if report_ovc_id == 1:
+            '''
             xlsm_name = '%sReport_%s' % (report_name, user_id)
-            write_xlsm(csv_file, xlsm_name)
+            xls = write_xlsm(csv_file, xlsm_name)
+            '''
         datas = {'file_name': fid, 'data': results,
-                 'status': status, 'message': message, 'xls': xlsm_name}
+                 'status': status, 'message': message, 'xls': xls_name}
+        print 'Results', message
         return JsonResponse(datas, content_type='application/json',
                             safe=False)
     except Exception, e:
@@ -1159,5 +1145,59 @@ def dashboard_details(request):
         print 'Error getting dasboard details - %s' % (str(e))
         return JsonResponse({}, content_type='application/json',
                             safe=False)
+    else:
+        pass
+
+
+def raw_data(request):
+    """Method to generate raw data and zip the file."""
+    try:
+        res = my_custom_sql(sql)
+        fname = '%s.csv' % (tstmp)
+        filename = '%s/csv/' % (DOC_ROOT, fname)
+        final_file_name = '%s.zip' % (fname)
+        dirname = '%s/archive/' % (DOC_ROOT)
+
+        zf = zipfile.ZipFile(final_file_name, "w")
+        zf.write(os.path.join(dirname, filename))
+        zf.close()
+    except Exception as e:
+        print 'Error getting Raw data - %s' % (str(e))
+        return 0
+    else:
+        return res
+
+
+def my_custom_sql(sql):
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        row = cursor.fetchone()
+
+    return row
+
+
+@login_required
+def reports_bursary(request):
+    """Method to do pivot reports."""
+    try:
+        form = CaseLoad(request.user)
+        if request.method == 'POST':
+            datas = []
+            bursaries = OVCGokBursary.objects.filter(is_void=False)
+            for bursary in bursaries:
+                sex = 'Female' if bursary.person.sex_id == 'SFEM' else 'Male'
+                vals = {'Age Set': '1', 'Sex': sex,
+                        'Fees': bursary.fees_amount,
+                        'Constituency': bursary.constituency.area_name,
+                        'Amount': bursary.approved_amount}
+            datas.append(vals)
+            results = {'data': datas, 'file_name': 'bursary.xlsx', 'status': 0,
+                       'message': 'Report Generated Successfully'}
+            return JsonResponse(results, content_type='application/json',
+                                safe=False)
+        return render(request, 'reports/bursary.html', {'form': form})
+    except Exception, e:
+        print 'error on bursary report - %s' % (str(e))
+        raise e
     else:
         pass

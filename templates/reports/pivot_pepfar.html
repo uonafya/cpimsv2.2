@@ -113,13 +113,15 @@
                         <a href="#" data-toggle="tooltip" title="Select report type."><i class="fa fa-info-circle fa-lg"></i></a>
                     </div>      
                     <div class="panel-body panel-form">
-                        <div class="form-group">
+                        <div style="margin: 10px;">
                             <label class="control-label col-md-4 col-sm-4"></label>
                             <div class="col-md-6 col-sm-6">
                                 <button type="submit" class="btn btn-sm btn-primary m-r-5"><i class="fa fa-check-square-o"></i> View </button>
                                 <button type="button" id="map-print" class="btn btn-sm btn-danger m-r-5" onclick="printChart()"><i class="fa fa-print"></i> Print Report</button>
                                 <button type="button" id="rpt-download" class="btn btn-sm btn-primary m-r-5"><i class="fa fa-download"></i> Download</button>
+                                <span  id="other_reports"></span>
                                 <input type="hidden" name="rpt_id" id="rpt_id">
+                                <input type="hidden" name="rpt_ovc_id" id="rpt_ovc_id" value="52">
                             </div>
                         </div>
                     </div>

@@ -35,8 +35,10 @@ INSTALLED_APPS = (
     'cpovc_forms',
     'cpovc_gis',
     'cpovc_access',
+    'cpovc_settings',
     'crispy_forms',
     'cpovc_ovc',
+    'import_export',
     'rest_framework',
 )
 
@@ -50,7 +52,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    # 'cpovc_main.middleware.SqlPrintingMiddleware',
+    'cpovc_main.middleware.SqlPrintingMiddleware',
     'cpovc_auth.middleware.UserRestrictMiddleware',
     'cpovc_access.middleware.FailedLoginMiddleware',
 )
@@ -82,6 +84,13 @@ DATABASES = {
         'USER': cpims_db_user,
         'PASSWORD': cpims_db_pass,
         'HOST': cpims_db_host,
+        'PORT': cpims_db_port, },
+    'reporting': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': cpims_db_instance,
+        'USER': cpims_db_user,
+        'PASSWORD': cpims_db_pass,
+        'HOST': '41.89.94.99',
         'PORT': cpims_db_port, }
 }
 
@@ -100,6 +109,7 @@ STATIC_URL = '/static/'
 DOCUMENTS_URL = '/documents/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'reports')
+
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"), )
 
 AUTH_USER_MODEL = 'cpovc_auth.AppUser'

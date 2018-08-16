@@ -10,26 +10,34 @@ import json
 import random
 import uuid
 import time
+from reportlab.pdfgen import canvas
 # from itertools import chain #
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from shutil import copyfile
 from cpovc_forms.forms import (
-    OVCSearchForm, ResidentialSearchForm, ResidentialFollowupForm, ResidentialForm, OVC_FT3hForm,
-    SearchForm, OVCCareSearchForm, OVC_CaseEventForm, DocumentsManager, OVCSchoolForm, OVCBursaryForm, BackgroundDetailsForm, OVC_FTFCForm,
-    OVCCsiForm, OVCF1AForm, OVCHHVAForm)
-from cpovc_forms.models import (OVCEconomicStatus, OVCFamilyStatus, OVCReferral, OVCHobbies, OVCFriends, OVCDocuments,
-                                OVCMedical, OVCCaseRecord, OVCNeeds, OVCCaseCategory, OVCCaseSubCategory, FormsLog, OVCCaseEvents,
-                                OVCCaseEventServices, OVCCaseEventCourt,
-                                OVCPlacement, OVCPlacementFollowUp, OVCDischargeFollowUp, OVCEducationFollowUp, OVCEducationLevelFollowUp,
-                                OVCAdverseEventsFollowUp, OVCAdverseEventsOtherFollowUp, OVCCaseEventClosure,
-                                OVCCaseGeo, OVCMedicalSubconditions, OVCBursary, OVCFamilyCare, OVCCaseEventSummon,
-                                OVCCareEvents, OVCCarePriority, OVCCareServices, OVCCareEAV, OVCCareAssessment)
+    OVCSearchForm, ResidentialSearchForm, ResidentialFollowupForm,
+    ResidentialForm, OVC_FT3hForm, SearchForm, OVCCareSearchForm,
+    OVC_CaseEventForm, DocumentsManager, OVCSchoolForm, OVCBursaryForm,
+    BackgroundDetailsForm, OVC_FTFCForm, OVCCsiForm, OVCF1AForm, OVCHHVAForm,
+    GOKBursaryForm)
+from .models import (
+    OVCEconomicStatus, OVCFamilyStatus, OVCReferral, OVCHobbies, OVCFriends,
+    OVCDocuments, OVCMedical, OVCCaseRecord, OVCNeeds, OVCCaseCategory,
+    OVCCaseSubCategory, FormsLog, OVCCaseEvents, OVCCaseEventServices,
+    OVCCaseEventCourt, OVCPlacement, OVCPlacementFollowUp,
+    OVCDischargeFollowUp, OVCEducationFollowUp, OVCEducationLevelFollowUp,
+    OVCAdverseEventsFollowUp, OVCAdverseEventsOtherFollowUp,
+    OVCCaseEventClosure, OVCCaseGeo, OVCMedicalSubconditions, OVCBursary,
+    OVCFamilyCare, OVCCaseEventSummon, OVCCareEvents, OVCCarePriority,
+    OVCCareServices, OVCCareEAV, OVCCareAssessment, OVCGokBursary)
 from cpovc_ovc.models import OVCRegistration, OVCHHMembers, OVCHealth, OVCHouseHold
 from cpovc_main.functions import (
-    get_list_of_org_units, get_dict, get_vgeo_list, get_vorg_list, get_persons_list, get_list_of_persons, get_list, form_id_generator,
-    case_event_id_generator, convert_date, new_guid_32, beneficiary_id_generator, translate_geo, translate,
-    translate_case, translate_reverse, translate_reverse_org, translate_school, get_days_difference)
+    get_list_of_org_units, get_dict, get_vgeo_list, get_vorg_list,
+    get_persons_list, get_list_of_persons, get_list, form_id_generator,
+    case_event_id_generator, convert_date, new_guid_32,
+    beneficiary_id_generator, translate_geo, translate, translate_case,
+    translate_reverse, translate_reverse_org, translate_school, get_days_difference)
 from cpovc_forms.functions import (save_audit_trail)
 from cpovc_main.country import (COUNTRIES)
 from cpovc_registry.models import (
@@ -43,8 +51,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
 from cpovc_registry.functions import get_list_types, extract_post_params
 from cpovc_ovc.functions import get_ovcdetails
-from .functions import create_fields, create_form_fields, save_form1b
-
+from .functions import create_fields, create_form_fields, save_form1b, save_bursary
+from .documents import create_mcert
 
 
 def validate_serialnumber(user_id, subcounty, serial_number):
@@ -8368,3 +8376,110 @@ def getJsonObject001(request):
         print '  Error: %s' % str(e)
     return JsonResponse(jsonCaseCategories, content_type='application/json',
                         safe=False)
+
+
+def list_bursary(request, id):
+    """
+    Method to do presidential Bursary
+    """
+    try:
+        check_fields = ['sex_id']
+        vals = get_dict(field_name=check_fields)
+        person = RegPerson.objects.get(id=id)
+        bursaries = OVCGokBursary.objects.filter(person_id=id)
+        if request.method == 'POST':
+            save_bursary(request, id)
+        form = GOKBursaryForm(initial={'person_type': 'TBVC'}, data=request.POST)
+        return render(request, 'forms/bursary/list.html',
+                      {'status': 200, 'form': form, 'child': person,
+                       'vals': vals, 'bursaries': bursaries})
+    except Exception as e:
+        print 'error saving bursary - %s' % (str(e))
+        raise e
+    else:
+        pass
+
+
+def view_bursary(request, id):
+    """
+    Method to do presidential Bursary
+    """
+    try:
+        check_fields = ['sex_id']
+        vals = get_dict(field_name=check_fields)
+        bursary = OVCGokBursary.objects.get(application_id=id)
+        if request.method == 'POST':
+            save_bursary(request, id)
+        form = GOKBursaryForm(initial={'person_type': 'TBVC'}, data=request.POST)
+        return render(request, 'forms/bursary/view.html',
+                      {'status': 200, 'form': form,
+                       'vals': vals, 'bursary': bursary})
+    except Exception as e:
+        print 'error saving bursary - %s' % (str(e))
+        raise e
+    else:
+        pass
+
+def new_bursary(request, id):
+    """
+    Method to do presidential Bursary
+    """
+    try:
+        check_fields = ['sex_id']
+        vals = get_dict(field_name=check_fields)
+        person = RegPerson.objects.get(id=id)
+        if request.method == 'POST':
+            save_bursary(request, id)
+        form = GOKBursaryForm(initial={'person_type': 'TBVC'}, data=request.POST)
+        return render(request, 'forms/bursary/new.html',
+                      {'status': 200, 'form': form, 'child': person,
+                       'vals': vals})
+    except Exception as e:
+        print 'error saving bursary - %s' % (str(e))
+        raise e
+    else:
+        pass
+
+
+def edit_bursary(request, id):
+    """
+    Method to do presidential Bursary
+    """
+    try:
+        check_fields = ['sex_id']
+        vals = get_dict(field_name=check_fields)
+        bursary = OVCGokBursary.objects.get(application_id=id)
+        bdata = {'fees_amount': bursary.fees_amount,
+                 'child_county': bursary.county.area_id }
+        if request.method == 'POST':
+            save_bursary(request, id)
+        form = GOKBursaryForm(initial={'person_type': 'TBVC'}, data=bdata)
+        return render(request, 'forms/bursary/edit.html',
+                      {'status': 200, 'form': form, 'vals': vals,
+                       'bursary': bursary})
+    except Exception as e:
+        print 'error saving bursary - %s' % (str(e))
+        raise e
+    else:
+        pass
+
+
+def form_bursary(request, id):
+    """
+    Method to do presidential Bursary
+    """
+    try:
+        check_fields = ['sex_id']
+        vals = get_dict(field_name=check_fields)
+        # Create the HttpResponse object with the appropriate PDF headers.
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Bursary.pdf"'
+        params = {'insurance': 'GOVERNMENT OF KENYA', 'status_id': 1,
+                  'insurances': 'BOX 12 Nairobi'}
+        resp = create_mcert(response, params)
+        return response
+    except Exception as e:
+        print 'error saving bursary - %s' % (str(e))
+        raise e
+    else:
+        pass

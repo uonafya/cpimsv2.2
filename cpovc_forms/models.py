@@ -776,3 +776,108 @@ class OVCCareF1B(models.Model):
 
     class Meta:
         db_table = 'ovc_care_f1b'
+
+
+class ListBanks(models.Model):
+    """List all Banks in Kenya."""
+    bank_name = models.CharField(max_length=150)
+    bank_code = models.CharField(max_length=10)
+    is_void = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'list_bank'
+        verbose_name = 'Bank'
+        verbose_name_plural = 'Banks'
+
+    def __unicode__(self):
+        """To be returned by admin actions."""
+        return self.bank_name
+
+
+class OVCGokBursary(models.Model):
+    """"Model to save all GoK Bursary application."""
+    application_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    county = models.ForeignKey(
+        'cpovc_main.SetupGeography', related_name='child_county')
+    constituency = models.ForeignKey(
+        'cpovc_main.SetupGeography', related_name='child_constituency')
+    person = models.ForeignKey(RegPerson)
+    sub_county = models.CharField(max_length=100, null=True)
+    location = models.CharField(max_length=100, null=True)
+    sub_location = models.CharField(max_length=100, null=True)
+    village = models.CharField(max_length=100)
+    nearest_school = models.CharField(max_length=100, null=True)
+    nearest_worship = models.CharField(max_length=100, null=True)
+    in_school = models.BooleanField(default=True)
+    school_class = models.CharField(max_length=50)
+    primary_school = models.CharField(max_length=150)
+    school_marks = models.IntegerField()
+    father_names = models.CharField(max_length=100)
+    father_alive = models.BooleanField(default=True)
+    father_telephone = models.CharField(max_length=20, null=True)
+    mother_names = models.CharField(max_length=100)
+    mother_alive = models.BooleanField(default=True)
+    mother_telephone = models.CharField(max_length=20, null=True)
+    guardian_names = models.CharField(max_length=100, null=True)
+    guardian_telephone = models.CharField(max_length=20, null=True)
+    guardian_relation = models.CharField(max_length=20, null=True)
+    same_household = models.BooleanField(default=True)
+    father_chronic_ill = models.BooleanField(default=True)
+    father_chronic_illness = models.CharField(max_length=100, null=True)
+    father_disabled = models.BooleanField(default=True)
+    father_disability = models.CharField(max_length=100, null=True)
+    father_pension = models.BooleanField(default=True)
+    father_occupation = models.CharField(max_length=100, null=True)
+    mother_chronic_ill = models.BooleanField(default=True)
+    mother_chronic_illness = models.CharField(max_length=100, null=True)
+    mother_disabled = models.BooleanField(default=True)
+    mother_disability = models.CharField(max_length=100, null=True)
+    mother_pension = models.BooleanField(default=True)
+    mother_occupation = models.CharField(max_length=100, null=True)
+    fees_amount = models.IntegerField()
+    fees_balance = models.IntegerField()
+    school_secondary = models.CharField(max_length=150)
+    school_principal = models.CharField(max_length=150)
+    school_county = models.ForeignKey(
+        'cpovc_main.SetupGeography', related_name='school_county')
+    school_constituency = models.ForeignKey(
+        'cpovc_main.SetupGeography', related_name='school_constituency')
+    school_sub_county = models.CharField(max_length=100, null=True)
+    school_location = models.CharField(max_length=100, null=True)
+    school_sub_location = models.CharField(max_length=100, null=True)
+    school_village = models.CharField(max_length=100, null=True)
+    school_telephone = models.CharField(max_length=20, null=True)
+    school_email = models.CharField(max_length=100, null=True)
+    school_type = models.CharField(max_length=5)
+    school_category = models.CharField(max_length=5)
+    school_enrolled = models.CharField(max_length=5)
+    school_bank = models.ForeignKey(ListBanks)
+    school_bank_branch = models.CharField(max_length=100)
+    school_bank_account = models.CharField(max_length=50)
+    school_recommend_by = models.CharField(max_length=5)
+    school_recommend_date = models.DateField()
+    chief_recommend_by = models.CharField(max_length=5)
+    chief_recommend_date = models.DateField()
+    chief_telephone = models.CharField(max_length=5)
+    csac_approved = models.BooleanField(default=True)
+    approved_amount = models.IntegerField()
+    ssco_name = models.CharField(max_length=100)
+    scco_signed = models.BooleanField(default=True)
+    scco_sign_date = models.DateField()
+    csac_chair_name = models.CharField(max_length=100)
+    csac_signed = models.BooleanField(default=True)
+    csac_sign_date = models.DateField()
+    app_user = models.ForeignKey(AppUser)
+    application_date = models.DateField()
+    created_at = models.DateTimeField(default=timezone.now)
+    is_void = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'bursary_application'
+        verbose_name = 'GoK Bursary'
+        verbose_name_plural = 'GoK Bursaries'
+
+    def __unicode__(self):
+        """To be returned by admin actions."""
+        return str(self.application_id)

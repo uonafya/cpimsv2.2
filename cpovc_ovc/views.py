@@ -11,7 +11,7 @@ from cpovc_registry.models import (
     RegPerson, RegPersonsGuardians, RegPersonsSiblings, RegPersonsExternalIds)
 from cpovc_main.functions import get_dict
 from .models import (
-    OVCRegistration, OVCHHMembers, OVCEligibility)
+    OVCRegistration, OVCHHMembers, OVCEligibility, OVCViralload)
 from .functions import (
     ovc_registration, get_hh_members, get_ovcdetails, gen_cbo_id, search_ovc,
     search_master, get_school, get_health, manage_checkins, ovc_management,
@@ -39,6 +39,13 @@ def ovc_home(request):
                 results = {'status': 0, 'message': msg, 'checkins': chs}
                 if rid == 2:
                     results = chs
+                return JsonResponse(results, content_type='application/json',
+                                    safe=False)
+            elif action_id in [4]:
+                msg = 'Record deleted successfully.'
+                cid = request.POST.get('cid')
+                ovc = OVCRegistration.objects.filter(id=cid).delete()
+                results = {'status': 0, 'message': 'Record deleted successfully.'}
                 return JsonResponse(results, content_type='application/json',
                                     safe=False)
             form = OVCSearchForm(data=request.POST)
@@ -190,6 +197,9 @@ def ovc_edit(request, id):
         hhid = hhold.house_hold_id
         hhmqs = OVCHHMembers.objects.filter(
             is_void=False, house_hold_id=hhid).order_by("-hh_head")
+        # Viral Load
+        vloads = OVCViralload.objects.filter(
+            is_void=False, person_id=ovc_id).order_by("-viral_date")
         # add caregivers hiv status
         hhmembers = hhmqs.exclude(person_id=child.id)
         # Get guardians and siblings ids
@@ -292,7 +302,7 @@ def ovc_edit(request, id):
                        'vals': vals, 'hhold': hhold, 'extids': gparams,
                        'hhmembers': hhmembers, 'levels': levels,
                        'sch_class': sch_class, 'siblings': siblings,
-                       'ctaker': ctaker})
+                       'ctaker': ctaker, 'vloads': vloads})
     except Exception, e:
         print "error with OVC editing - %s" % (str(e))
         raise e
@@ -359,6 +369,15 @@ def ovc_view(request, id):
         hhmqs = OVCHHMembers.objects.filter(
             is_void=False, house_hold_id=hhid).order_by("-hh_head")
         hhmembers = hhmqs.exclude(person_id=child.id)
+        # Viral load
+        vload = OVCViralload.objects.filter(
+            is_void=False, person_id=ovc_id).order_by("-viral_date")[:1]
+        vl_sup, v_val, v_dt = 'Missing', None, None
+        if vload:
+            for vl in vload:
+                v_val = vl.viral_load
+                v_dt = vl.viral_date
+            vl_sup = 'YES' if not v_val or v_val < 1000 else 'NO'
         # Get siblings
         siblings = RegPersonsSiblings.objects.filter(
             is_void=False, child_person_id=child.id)
@@ -388,7 +407,8 @@ def ovc_view(request, id):
                        'vals': vals, 'hhold': hhold, 'creg': creg,
                        'extids': gparams, 'health': health,
                        'hhmembers': hhmembers, 'school': school,
-                       'services': services, 'allow_edit': allow_edit})
+                       'services': services, 'allow_edit': allow_edit,
+                       'suppression': vl_sup})
     except Exception, e:
         print "error with OVC viewing - %s" % (str(e))
         raise e

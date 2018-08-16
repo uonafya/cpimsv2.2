@@ -506,6 +506,8 @@ def new_person(request):
 
             if not des_phone_number:
                 des_phone_number = None
+            if des_phone_number:
+                des_phone_number = des_phone_number[-9:]
 
             person_types = [person_type]
             if 'TBGR' != person_type and is_caregiver:
@@ -541,7 +543,14 @@ def new_person(request):
                     child_cbo_id=cbo_id, child_chv_id=chv_id,
                     exit_date=None, created_at=now)
                 ovc.save()
-
+                '''
+                ovc, created = OVCRegistration.objects.get_or_create(
+                    person_id=reg_person_pk,
+                    defaults={"registration_date": reg_date, "has_bcert": has_bcert,
+                              "is_disabled": False, "is_void": False,
+                              "child_cbo_id": cbo_id, "child_chv_id": chv_id,
+                              "exit_date": None, "created_at": now })
+                '''
             # Capture RegPersonTypes Model
             if person_types:
                 save_person_type(person_types, reg_person_pk)
@@ -1579,6 +1588,8 @@ def person_actions(request):
                         idno = cgobj['idno'] if 'idno' in cgobj else None
                         tel_no = cgobj['tel'] if 'tel' in cgobj else None
                         tel = tel_no if tel_no else None
+                        if tel:
+                            tel = tel[-9:]
                         print 'obj', cgobj
                         print 'tel', tel
                         if caregiver_id == 0:

@@ -216,5 +216,15 @@ urlpatterns = patterns(
         'view_hhva', name='view_hhva'),
     url(r'^hhva/delete/(?P<id>\w+)/$',
         'delete_hhva', name='delete_hhva'),
-
+    # Presidential Bursary
+    url(r'^bursary/list/(?P<id>\d+)/$',
+        'list_bursary', name='list_bursary'),
+    url(r'^bursary/view/(?P<id>[0-9A-Za-z_\-{32}\Z]+)/$',
+        'view_bursary', name='view_bursary'),
+    url(r'^bursary/new/(?P<id>\d+)/$',
+        'new_bursary', name='new_bursary'),
+    url(r'^bursary/edit/(?P<id>[0-9A-Za-z_\-{32}\Z]+)/$',
+        'edit_bursary', name='edit_bursary'),
+    url(r'^bursary/form/(?P<id>[0-9A-Za-z_\-{32}\Z]+)/$',
+        'form_bursary', name='form_bursary'),
 )

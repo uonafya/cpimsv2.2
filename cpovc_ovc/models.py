@@ -328,3 +328,26 @@ class OVCExit(models.Model):
     def __unicode__(self):
         """To be returned by admin actions."""
         return str(self.org_unit_name)
+
+
+class OVCViralload(models.Model):
+    """Model for OVC Care Viral Load."""
+
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    person = models.ForeignKey(RegPerson)
+    viral_load = models.IntegerField(null=True)
+    viral_date = models.DateField(null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_void = models.BooleanField(default=False)
+
+    class Meta:
+        """Override table details."""
+
+        db_table = 'ovc_viral_load'
+        verbose_name = 'OVC Viral Load'
+        verbose_name_plural = 'OVC Viral Loads'
+
+    def __unicode__(self):
+        """To be returned by admin actions."""
+        return str(self.person)

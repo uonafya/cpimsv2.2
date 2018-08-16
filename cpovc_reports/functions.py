@@ -8,6 +8,7 @@ import calendar
 import collections
 import pandas
 from django.db import connection
+from django.db import connections
 from datetime import datetime, timedelta, date
 from calendar import monthrange, month_name
 from collections import OrderedDict
@@ -2004,13 +2005,13 @@ def get_variables(request):
         report_ovc_id = request.POST.get('rpt_ovc_id')
         rpt_ovc = int(report_ovc) if report_ovc else 1
         rpt_ovc_id = int(report_ovc_id) if report_ovc_id else 1
-        if rpt_ovc == 6:
+        if rpt_ovc == 6 or rpt_ovc in [1, 2, 3]:
             report_ovc_name = ORPTS[rpt_ovc_id]
         else:
             report_ovc_name = RPTS[rpt_ovc]
         report_name = report_ovc_name.title().replace(' ', '')
         categories = {}
-        report_id = int(report) if report else 0
+        report_id = int(report) if report else rpt_ovc_id
         if int(report_id) in [3, 4]:
             report_unit = report_inst
             rpt_years = rpt_iyears
@@ -2117,6 +2118,10 @@ def get_variables(request):
         unit_type = 'for %s' % (inst_cats[unit_id]) if check_region else ''
         report_variables['unit_type'] = unit_type
         # print 'VARS', report_variables
+        cbo_id = int(report_unit) if report_unit else 0
+        if report_id == 5 and cluster:
+            cbo_id = get_cbo_cluster(cluster)
+        report_variables['cbos'] = cbo_id
     except Exception, e:
         print 'error creating variables - %s' % (str(e))
         raise e
@@ -2443,6 +2448,7 @@ def get_services_data(servs, params):
         return datas
 
 
+
 def get_viral_load_rpt_stats(params):
     """Get viral load data."""
     try:
@@ -2499,11 +2505,14 @@ def get_viral_load_rpt_stats(params):
         return results
 
 
+
+
+
 def get_pivot_ovc(request, params={}):
     """Method to get OVC Pivot Data."""
     try:
         datas = []
-        report_id = int(request.POST.get('report_ovc'))
+        report_id = int(request.POST.get('rpt_ovc_id'))
         kpis = {}
         kpis[1] = '1.a %s OVCs Ever Registered'
         kpis[2] = '1.b %s New OVC Registrations within period'
@@ -2542,6 +2551,7 @@ def get_pivot_ovc(request, params={}):
         services[1] = 'a.OVC HIVSTAT'
         services[2] = 'b.OVC Served'
         services[3] = 'c.OVC Not Served'
+        '''
         if report_id == 3:
             datas = get_registration_data(kpis, params)
         elif report_id == 2:
@@ -2549,7 +2559,8 @@ def get_pivot_ovc(request, params={}):
         elif report_id == 1:
             datas = get_services_data(services, params)
         else:
-            datas, titles = get_sql_data(request, params)
+        '''
+        datas, titles = get_sql_data(request, params)
     except Exception, e:
         print 'Error getting OVC pivot data - %s' % (str(e))
         return []
@@ -2582,20 +2593,29 @@ def write_xlsm(csv_file, file_name, report_id=1):
         print MEDIA_ROOT
         csv_file_name = '%s/%s.csv' % (MEDIA_ROOT, csv_file)
         excel_file = '%s/%s.xlsx' % (MEDIA_ROOT, file_name)
-        s_name = RPTS[report_id]
+        s_name = RPTS[report_id] if report_id in RPTS else 1
         vba_file = '%s/%s/vbaProject.bin' % (DOC_ROOT, s_name)
-        writer = pandas.ExcelWriter(excel_file, engine='xlsxwriter')
-        data = pandas.read_csv(csv_file_name)
-        data.to_excel(writer, sheet_name='Sheet1', index=False)
-        workbook = writer.book
-        xlsm_file = '%s/%s.xlsm' % (MEDIA_ROOT, file_name)
-        workbook.filename = xlsm_file
-        workbook.add_vba_project(vba_file)
-        writer.save()
-        print 'Macros written'
+        if os.path.isfile(vba_file):
+            writer = pandas.ExcelWriter(excel_file, engine='xlsxwriter')
+            data = pandas.read_csv(csv_file_name)
+            data.to_excel(writer, sheet_name='Sheet1', index=False)
+            workbook = writer.book
+            xlsm_file = '%s/%s.xlsm' % (MEDIA_ROOT, file_name)
+            workbook.add_worksheet('Sheet2')
+            workbook.add_worksheet('Sheet3')
+            workbook.filename = xlsm_file
+            workbook.add_vba_project(vba_file)
+            writer.save()
+            writer.close()
+            print 'Macros written - %s' % (xlsm_file)
+        else:
+            file_name = ""
+            print 'No Macros Script - %s' % (vba_file)
     except Exception, e:
         print "error creating excel - %s" % (str(e))
-        pass
+        return ""
+    else:
+        return file_name
 
 
 def get_sql_data(request, params):
@@ -2616,15 +2636,17 @@ def get_sql_data(request, params):
     qname = REPORTS[rpt_ovc] if rpt_ovc in REPORTS else df_rpt
     sql = QUERIES[qname]
     sql = sql.format(**params)
-    print 'nnnnn'
+    print 'Report Name', qname
     row, desc = run_sql_data(request, sql)
     data = datas + row
+    '''
     qblank = '%s_blank' % (qname)
     if qblank in QUERIES:
         bsql = QUERIES[qblank]
         bsql = bsql.format(**params)
         brow, bdesc = run_sql_data(request, bsql)
         data = data + brow
+
     for i in range(1, 5):
         qs = '%s_%s' % (qname, str(i))
         qb = '%s_blank_%s' % (qname, str(i))
@@ -2638,6 +2660,7 @@ def get_sql_data(request, params):
             sql = sql.format(**params)
             brow, desc = run_sql_data(request, sql)
             data = data + brow
+    '''
     return data, desc
 
 
@@ -2646,17 +2669,34 @@ def dictfetchall(cursor):
     column = [col[0] for col in cursor.description]
     columns = [col.upper() for col in column]
     return [
-        dict(zip(columns, row))
+        collections.OrderedDict(zip(columns, row))
         for row in cursor.fetchall()
     ]
 
 
 def run_sql_data(request, sql):
-    with connection.cursor() as cursor:
-        cursor.execute(sql)
-        desc = cursor.description
-        rows = dictfetchall(cursor)
-    return rows, desc
+    """
+    Method to handle Database connections
+    User Reporting DB for reporting but
+    Fallback to Transaction DB if any error
+    """
+    try:
+        db_inst = 'default'
+        dbinstance = connections[db_inst]
+        print 'Query Reporting database .....'
+        with dbinstance.cursor() as cursor:
+            cursor.execute(sql)
+            desc = cursor.description
+            rows = dictfetchall(cursor)
+    except Exception as e:
+        print 'Defaulting to Transaction DB - %s' % (str(e))
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            desc = cursor.description
+            rows = dictfetchall(cursor)
+        return rows, desc
+    else:
+        return rows, desc
 
 
 def get_cbo_cluster(cluster_id):
@@ -2814,9 +2854,9 @@ def csvxls_data(request, f):
 def create_pivot(df):
     """create pivot."""
     try:
-        dt = pd.pivot_table(df, index=['NAME', 'ACTIVE'],
-                            columns=['SERVICES', 'AGERANGE', 'GENDER'],
-                            values=['OVCCOUNT'], margins=False,
+        dt = pd.pivot_table(df, index=['name', 'active'],
+                            columns=['services', 'agerange', 'gender'],
+                            values=['ovccount'], margins=False,
                             aggfunc=[np.sum], fill_value=0)
     except Exception as e:
         raise e
@@ -2877,8 +2917,8 @@ def create_pepfar(request, response, cfile):
         csv_file = '%s/tmp-%s.csv' % (MEDIA_ROOT, cfile)
         print csv_file
         df = pd.read_csv(csv_file, sep=',')
-        df_level = df[['LEVEL', 'NAME', 'ACTIVE', 'SERVICES', 'AGERANGE',
-                       'GENDER', 'OVCCOUNT']]
+        df_level = df[['level', 'name', 'active', 'services', 'agerange',
+                       'gender', 'ovccount']]
         # To writing
         report_name = 'Pepfar'
         tmpt_file = '%s/%s.xltm' % (DOC_ROOT, report_name)
@@ -2889,13 +2929,13 @@ def create_pepfar(request, response, cfile):
         for sheet in wb.sheetnames:
             # ws = wb[sheet]
             if sheet.startswith('CBO'):
-                dfl = df_level[df.LEVEL == 'CBO']
+                dfl = df_level[df.level == 'CBO']
                 dataframe = create_pivot(dfl)
-            elif sheet.startswith('Constituency'):
-                dfl = df_level[df.LEVEL == 'Constituency']
+            elif sheet.startswith('Ward'):
+                dfl = df_level[df.level == 'Ward']
                 dataframe = create_pivot(dfl)
             else:
-                dfl = df_level[df.LEVEL == 'County']
+                dfl = df_level[df.level == 'County']
                 dataframe = create_pivot(dfl)
             create_sheet(dataframe, writer, sheet)
         wb.save(response)

@@ -317,8 +317,8 @@ var handleStackedChart = function () {
     "use strict";
 
     var ticksLabel = [
-        [0, "Ever <br/>Registered"], [1, "Active OVC"], [2, "School Going"],
-        [3, "OVC Served"], [4, "Caregivers"]
+        [0, "Ever <br/>Registered"], [1, "Active <br/>OVC"], [2, "School <br/>Going"],
+        [3, "OVC <br/>Served"], [4, "Caregivers"]
     ];
     
     var options = { 

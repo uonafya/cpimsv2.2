@@ -42,6 +42,8 @@ urlpatterns = patterns(
     url(r'^dashboard/data/$', 'dashboard_details',
         name='dashboard_details'),
     url(r'^cluster/$', 'cluster', name='cluster'),
-    url(r'^ovc/$', 'reports_ovc_list', name='reports_ovc_list'),)
+    url(r'^ovc/$', 'reports_ovc_list', name='reports_ovc_list'),
+     url(r'^bursary/$', 'reports_bursary', name='bursary_reports'),
+    )
 
 

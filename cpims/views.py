@@ -1,4 +1,5 @@
 """Main CPIMS common views."""
+import memcache
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -7,14 +8,33 @@ from cpovc_main.functions import get_dict
 from cpovc_access.functions import access_request
 from django.contrib.auth.decorators import login_required
 
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+
 
 @login_required(login_url='/login/')
 def home(request):
+    """Some default page for the home page / Dashboard."""
+    try:
+        vals = get_dashboard(request)
+        return render(request, 'dashboard.html', vals)
+    except Exception, e:
+        print 'dashboard error - %s' % (str(e))
+        raise e
+
+
+def get_dashboard(request):
     """Some default page for the home page / Dashboard."""
     my_dates, my_cvals = [], []
     my_ovals, my_kvals = [], []
     my_dvals = []
     try:
+        user_key = 'dash_%s' % (request.user.id)
+        value = mc.get(user_key)
+        if value:
+            print 'In memcache Dashboard - %s' % (user_key)
+            return value
+        else:
+            print 'Set new Dashboard - %s' % (user_key)
         dash = dashboard()
         start_date = datetime.now() - timedelta(days=21)
         summary = {}
@@ -103,14 +123,16 @@ def home(request):
         of_data = '[0, {f0}], [1, {f1}], [2, {f2}], [3, {f3}], [4, {f4}]'
         omdata = om_data.format(**ovc_params)
         ofdata = of_data.format(**ovc_params)
-        return render(request, 'dashboard.html',
-                      {'status': 200, 'dates': dates, 'kvals': kvals,
-                       'dvals': dvals, 'cvals': cvals, 'data': summary,
-                       'ovals': ovals, 'ovc': ovc, 'omvals': omdata,
-                       'ofvals': ofdata})
+        vals = {'status': 200, 'dates': dates, 'kvals': kvals,
+                'dvals': dvals, 'cvals': cvals, 'data': summary,
+                'ovals': ovals, 'ovc': ovc, 'omvals': omdata,
+                'ofvals': ofdata}
+        mc.set(user_key, vals, 6 * 60 * 60 )
     except Exception, e:
         print 'dashboard error - %s' % (str(e))
         raise e
+    else:
+        return vals
 
 
 def access(request):
