@@ -370,6 +370,7 @@ AND cbo_id in ({cbos})
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
+
 					)
 	group by 	CBO,cbo_id ;	
 
@@ -383,7 +384,7 @@ WHEN CAST(COUNT(DISTINCT domain) AS integer) > 2 then '3orMore Services'
 ELSE '1or2 Services'
 END AS NumberofServices
 into TEMP temp_pepfarsummary
-	FROM	(SELECT person_id, CBO, ward, item_description, 
+	FROM	(SELECT person_id, CBO,cboid, ward, item_description,
 		County,
 		sex_id,
 		CASE
@@ -542,7 +543,7 @@ from temp_pepfarsummary
 UNION
 select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
-from temp_pepfarsummary
+from temp_pepfarsummary;
 '''
 
     # DATIM
@@ -589,7 +590,7 @@ INTO TEMP temp_ExitsTRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER
 from vw_cpims_exits
 where 	datimexitreason = 'TRANSFERRED_TO_NON_PEPFAR_SUPPORTED_PARTNER'
   AND
-  vw_cpims_registration.cbo_id in ({cbos})
+  vw_cpims_exits.cbo_id in ({cbos})
 AND			
 ( (exit_status = 'EXITED' and  (registration_date between '{datim_start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date > '{end_date}' )
@@ -613,6 +614,9 @@ AND
 	or (exit_status = 'EXITED' and registration_date <= '{datim_start_date}'  and exit_date between '{datim_start_date}' and '{end_date}' )
 										)
 GROUP BY ward_id;
+
+
+
 
 --Datim Services
 	SELECT DISTINCT person_id as ovcid, CBO, ward, County,AgeRange,
@@ -648,8 +652,7 @@ GROUP BY ward_id;
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
-          AND
-          vw_cpims_registration.cbo_id in ({cbos})
+
 					)
 		GROUP BY person_id, vw_cpims_Registration.CBO, vw_cpims_Registration.ward, item_description,
 		vw_cpims_Registration.County,sex_id,date_of_birth,cboid,vw_cpims_Registration.Countyid,vw_cpims_Registration.ward_id,domain
@@ -682,7 +685,7 @@ GROUP BY ward_id;
 			(select distinct school_level
 					from ovc_registration
 					where school_level in
-              AND ovc_registration.child_cbo_id in ({cbos})
+
 
 			(SELECT item_id
 			 FROM list_general
@@ -718,8 +721,7 @@ where vw_cpims_registration.cbo_id in ({cbos}) AND ((exit_status = 'ACTIVE' and 
 			 where item_category = 'School Level'))
 				and
 					vw_cpims_Registration.age > 17
-          AND
-          vw_cpims_registration.cbo_id in ({cbos})
+
 					)
 	and cpims_ovc_id in (select ovcid from temp_datimservices)
 	group by 	ward,County,ward_id ;	
