@@ -385,9 +385,6 @@ GROUP BY
 reg_person.sex_id, Domain;'''
 
 
-
-
-
 # KPI
 QUERIES['kpi'] = '''
 select
