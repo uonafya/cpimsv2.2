@@ -25,6 +25,8 @@ REPORTS[13] = 'master_list'
 REPORTS[14] = 'ovc_assessed_list'
 REPORTS[15] = 'ovc_overall_view'
 REPORTS[18] = 'datim_mer'
+REPORTS[19] = 'assessments_needs_services_detailed'
+REPORTS[20] = 'assessments_needs_services_summary'
 
 # Master List
 QUERIES['master_list'] = '''
@@ -2631,4 +2633,159 @@ group by vw_cpims_Registration.cbo, vw_cpims_Registration.ward,
  vw_cpims_Registration.county,dob,
 	ward_id,countyid,
 	gender,artstatus,ovchivstatus
+'''
+
+QUERIES['assessments_needs_services_detailed'] = '''
+SELECT CAST(COUNT(DISTINCT person_id) AS integer) AS OVCCount, CBO, person_id, item_description as Service,County,AgeRange,
+CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 'Male' END AS Gender,
+case domain
+when 'DSHC' then 'Shelter and Care'
+when 'DPSS' then 'Psychosocial'
+when 'DPRO' then 'Protection'
+when 'DHES' then 'Economic Strengthening'
+when 'DHNU' then 'Health and Nutrition'
+when 'DEDU' then 'Education'
+ELSE 'Un-allocated'
+END
+as Domain,
+Indicator
+FROM
+(
+
+--Assessments
+SELECT person_id, CBO,  ward, item_description,
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Assessments' || ' '  as Indicator
+FROM  vw_cpims_assessments
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward, item_description,
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+UNION
+--Needs
+SELECT person_id, CBO,  ward, item_description, 
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Needs ' || ' '  as Indicator
+FROM  vw_cpims_priorityneeds
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward, item_description, 
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+union
+--services
+SELECT person_id, CBO,  ward, item_description, 
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]' 
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Services ' || ' '  as Indicator
+FROM  vw_cpims_services
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward, item_description, 
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+) tbl_pepfar
+group by CBO, ward,person_id ,item_description,County,AgeRange,Gender,domain,Indicator
+'''
+
+QUERIES['assessments_needs_services_summary'] = '''
+SELECT CAST(COUNT(DISTINCT person_id) AS integer) AS OVCCount, CBO, ward, County,AgeRange,
+CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 'Male' END AS Gender,
+case domain
+when 'DSHC' then 'Shelter and Care'
+when 'DPSS' then 'Psychosocial'
+when 'DPRO' then 'Protection'
+when 'DHES' then 'Economic Strengthening'
+when 'DHNU' then 'Health and Nutrition'
+when 'DEDU' then 'Education'
+ELSE 'Un-allocated'
+END
+as Domain,
+Indicator
+FROM
+(
+
+    -- Assessments
+ SELECT person_id, CBO,  ward,
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Assessments ' || ' '  as Indicator
+FROM  vw_cpims_assessments
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward,
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+UNION
+
+--Needs
+SELECT person_id, CBO,  ward,  
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Needs ' || ' '  as Indicator
+FROM  vw_cpims_priorityneeds
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward,  
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+union
+--services
+SELECT person_id, CBO,  ward, 
+County,
+sex_id,domain,
+CASE
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+ELSE 'g.[25+yrs]' END AS AgeRange, 'Services ' || ' '  as Indicator
+FROM  vw_cpims_services
+WHERE  cboid in ({cbos}) AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
+GROUP BY person_id, CBO,  ward, 
+County,
+sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
+
+) tbl_pepfar
+group by CBO, ward, County,AgeRange,Gender,domain,Indicator
 '''
