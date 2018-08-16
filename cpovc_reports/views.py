@@ -834,6 +834,17 @@ def reports_ovc_pivot(request):
     else:
         pass
 
+@login_required
+def reports_ovc_pivot_datim_mer(request):
+    """Method to do pivot reports."""
+    try:
+        form = CaseLoad(request.user)
+        return render(request, 'reports/pivot_datim_mer.html', {'form': form})
+    except Exception, e:
+        raise e
+    else:
+        pass
+
 
 @login_required
 def reports_ovc_pepfar(request):
