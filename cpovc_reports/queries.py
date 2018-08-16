@@ -42,7 +42,7 @@ SELECT cbo_id, vw_cpims_registration.cbo, vw_cpims_registration.ward_id, vw_cpim
        exit_date, immunization,item_description as PriorityNeed,'-' as Quantity, '-' as Received_Yes_NO,'-' as DateReceived, '-' as ParentSignature
   FROM vw_cpims_registration
 INNER JOIN vw_cpims_priorityneeds ON vw_cpims_registration.cpims_ovc_id = vw_cpims_priorityneeds.person_id
-where ovc_registration.child_cbo_id in ({cbos}) AND date_of_event between '{start_date}' and '{end_date}'
+where vw_cpims_registration.cbo_id in ({cbos}) AND date_of_event between '{start_date}' and '{end_date}'
 and  ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
 	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
 	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
