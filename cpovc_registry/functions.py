@@ -135,33 +135,66 @@ def get_ovc_hiv_status(request,org_ids):
     hiv_status['not_suppresed'] = supression[1]
 
     #rates %
-    x = float(hiv_status['on_art'])/float(hiv_status['ovc_HSTP']) * 100
-    hiv_status['on_art_rate'] ="%.2f" % x
+    try:
+        x = float(hiv_status['on_art'])/float(hiv_status['ovc_HSTP']) * 100
+        hiv_status['on_art_rate'] ="%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['on_art_rate'] =0
+        raise e
+    try:
+        x = float(hiv_status['not_on_art']) / float(hiv_status['ovc_HSTP']) * 100
+        hiv_status['not_on_art_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['not_on_art_rate'] = 0
+        raise e
 
-    x = float(hiv_status['not_on_art']) / float(hiv_status['ovc_HSTP']) * 100
-    hiv_status['not_on_art_rate'] = "%.2f" % x
+    try:
+        x = float(supression[0]) / float(hiv_status['on_art']) * 100
+        hiv_status['suppresed_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['suppresed_rate'] = 0
+        raise e
 
-    x = float(supression[0]) / float(hiv_status['on_art']) * 100
-    hiv_status['suppresed_rate'] = "%.2f" % x
-
-    x = float(supression[1]) / float(hiv_status['on_art']) * 100
-    hiv_status['not_suppresed_rate'] = "%.2f" % x
+    try:
+        x = float(supression[1]) / float(hiv_status['on_art']) * 100
+        hiv_status['not_suppresed_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['not_suppresed_rate'] = 0
+        raise e
 
     ovc_total = hiv_status['ovc_HSTP']+ hiv_status['ovc_HSTN'] + hiv_status['ovc_unknown_count']
 
-    x = float(hiv_status['ovc_HSTP']) / float(ovc_total) * 100
-    hiv_status['ovc_HSTP_rate'] = "%.2f" % x
+    try:
+        x = float(hiv_status['ovc_HSTP']) / float(ovc_total) * 100
+        hiv_status['ovc_HSTP_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['ovc_HSTP_rate'] = 0
+        raise e
 
-    x = float(hiv_status['ovc_HSTN']) / float(ovc_total) * 100
-    hiv_status['ovc_HSTN_rate'] = "%.2f" % x
+    try:
+        x = float(hiv_status['ovc_HSTN']) / float(ovc_total) * 100
+        hiv_status['ovc_HSTN_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['ovc_HSTN_rate'] = 0
+        raise e
 
-    x = float(hiv_status['ovc_unknown_count']) / float(ovc_total) * 100
-    hiv_status['ovc_unknown_count_rate'] = "%.2f" % x
+    try:
+        x = float(hiv_status['ovc_unknown_count']) / float(ovc_total) * 100
+        hiv_status['ovc_unknown_count_rate'] = "%.2f" % x
+    except Exception, e:
+        print 'dash chart error - %s' % (str(e))
+        hiv_status['ovc_unknown_count_rate'] = 0
+        raise e
 
     hiv_status_list_envelop.append(hiv_status)
 
     return hiv_status_list_envelop
-
 
 
 def get_ovc_domain_hiv_status(request,org_ids):
