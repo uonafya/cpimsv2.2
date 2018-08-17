@@ -208,6 +208,8 @@ def get_ovc_domain_hiv_status(request,org_ids):
         if len(org_ids)==1:
             if org_ids[0]==0:
                 cbos="(select child_cbo_id from ovc_registration)"
+            else:
+                cbos="({})".format(org_ids[0])
         else:
             cbos = ','.join(str(v) for v in org_ids)
             cbos= '{}{}{}'.format('(',cbos,')')
