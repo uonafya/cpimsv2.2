@@ -925,6 +925,50 @@ group by ward, graduation order by 1,2')
 AS ct("ward" text, "WardActive" int, "WARDGraduated" int,
 "WARDTransferred" int, "WARDExitedWithoutGraduation" int);;'''
 
+
+QUERIES['datim_4'] = '''
+select
+cast(count(distinct ovc_registration.person_id) as integer) as OVCCount,
+CASE reg_person.sex_id WHEN 'SFEM' THEN 'Female' ELSE 'Male' END AS Gender,
+CASE ovc_registration.hiv_status
+WHEN 'HSTP' THEN '2a. (i) OVC_HIVSTAT: HIV+'
+WHEN 'HSTN' THEN '2b. OVC_HIVSTAT: HIV-'
+ELSE '2c. OVC_HIVSTAT: HIV Status NOT Known'
+END AS Domain
+from ovc_registration
+INNER JOIN reg_person ON ovc_registration.person_id=reg_person.id
+LEFT OUTER JOIN reg_org_unit ON reg_org_unit.id=ovc_registration.child_cbo_id
+LEFT OUTER JOIN reg_persons_geo ON reg_persons_geo.person_id=ovc_registration.person_id and reg_persons_geo.area_id > 337
+WHERE reg_persons_geo.is_void = False
+and ovc_registration.is_void = False
+and ovc_registration.child_cbo_id in {cbos}
+ 
+GROUP BY reg_person.sex_id, Domain;'''
+
+
+QUERIES['datim_5'] = '''
+select
+cast(count(distinct ovc_registration.person_id) as integer) as OVCCount,
+CASE reg_person.sex_id WHEN 'SFEM' THEN 'Female' ELSE 'Male' END AS Gender,
+CASE ovc_registration.art_status
+WHEN 'ARAR' THEN '2a. (ii) OVC_HIVSTAT: HIV+ on ARV Treatment'
+WHEN 'ARPR' THEN '2a. (ii) OVC_HIVSTAT: HIV+ on ARV Treatment'
+ELSE '2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV Treatment'
+END AS Domain
+from ovc_registration
+INNER JOIN reg_person ON ovc_registration.person_id=reg_person.id
+LEFT OUTER JOIN reg_org_unit ON reg_org_unit.id=ovc_registration.child_cbo_id
+LEFT OUTER JOIN reg_persons_geo ON reg_persons_geo.person_id=ovc_registration.person_id and reg_persons_geo.area_id > 337
+LEFT OUTER JOIN ovc_care_health ON ovc_care_health.person_id=ovc_registration.person_id
+WHERE reg_persons_geo.is_void = False
+AND ovc_registration.hiv_status = 'HSTP'
+and ovc_registration.is_void = False
+and ovc_registration.child_cbo_id in {cbos}
+
+GROUP BY 
+reg_person.sex_id, Domain;'''
+
+
 # KPI
 QUERIES['kpi'] = '''
 select

@@ -2448,6 +2448,66 @@ def get_services_data(servs, params):
         return datas
 
 
+
+def get_viral_load_rpt_stats(params):
+    """Get viral load data."""
+    try:
+
+        results = []
+        start = time.clock()
+
+        cbo = params['org_unit']
+        cbo_id = int(cbo) if cbo else 0
+        rpt_id = params['report_region']
+
+        cluster = params['cluster'] if 'cluster' in params else 0
+        report_id = int(rpt_id) if rpt_id else 0
+        # cbos = [cbo_id]
+        print "cbos id {}".format(cbo_id)
+        if report_id == 5:
+            cbo_id = get_cbo_cluster(cluster)
+            # cbos = cbo_id.split(',')
+        with connection.cursor() as cursor:
+            try:
+                query = ''' SELECT ovc_reg.person_id ,CONCAT (reg_person.surname,' ',reg_person.first_name, ' ', reg_person.other_names)  AS "Full name",vl.viral_load as vload 
+                        FROM ovc_registration ovc_reg inner join reg_person reg_person on reg_person.id=ovc_reg.person_id inner join 
+                        ovc_viral_load vl on vl.person_id = ovc_reg.person_id where ovc_reg.art_status = 'ARAR'                             
+                        '''
+                if cbo_id:
+                    query = query + " and ovc_reg.child_cbo_id in ({})".format(cbo_id)
+
+                cursor.execute(
+                    query
+                )
+                result_set = cursor.fetchall()
+
+                for ovc_person in result_set:
+                    suppression = "N/A"
+
+                    try:
+                        if (int(ovc_person[2]) < 1000):
+                            suppression = "Suppressed"
+                        elif (int(ovc_person[2]) > 1000):
+                            suppression = "Not Suppressed"
+                    except Exception, e:
+                        pass
+                    results.append({'CPIMS ID': ovc_person[0], 'NAME': ovc_person[1], 'VIRAL LOAD': ovc_person[2],
+                                    'SUPPRESSION': suppression})
+
+            except Exception, e:
+                print 'error viral load stats - %s' % (str(e))
+
+        return results
+    except Exception, e:
+        print 'viral load report error - %s' % (str(e))
+        raise e
+    else:
+        return results
+
+
+
+
+
 def get_pivot_ovc(request, params={}):
     """Method to get OVC Pivot Data."""
     try:
