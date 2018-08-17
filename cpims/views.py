@@ -30,13 +30,11 @@ def get_dashboard(request):
     try:
         user_key = 'dash_%s' % (request.user.id)
         value = mc.get(user_key)
-        '''
         if value:
             print 'In memcache Dashboard - %s' % (user_key)
             return value
         else:
             print 'Set new Dashboard - %s' % (user_key)
-        '''
         dash = dashboard()
         start_date = datetime.now() - timedelta(days=21)
         summary = {}
