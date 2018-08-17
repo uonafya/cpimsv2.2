@@ -357,10 +357,10 @@ CBO,cbo_id
 into TEMP temp_Actives
 from vw_cpims_Registration
 where vw_cpims_registration.cbo_id in ({cbos})
-		AND ((exit_status = 'ACTIVE' and registration_date <= '30-mar-2018')
-	or (exit_status = 'EXITED' and  (registration_date between '01-jan-2017' and '30-mar-2018' ))
-	or (exit_status = 'EXITED' and registration_date <= '01-jan-2017'  and exit_date > '30-mar-2018' )
-	or (exit_status = 'EXITED' and registration_date <= '01-jan-2017'  and exit_date between '01-jan-2017' and '30-mar-2018' )
+		AND ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
+	or (exit_status = 'EXITED' and  (registration_date between '{start_date}' and '{end_date}' ))
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date > '{end_date}' )
+	or (exit_status = 'EXITED' and registration_date <= '{start_date}'  and exit_date between '{start_date}' and '{end_date}' )
 										)
 	and not
 			(vw_cpims_Registration.schoollevel not in
@@ -382,23 +382,23 @@ tbl_pepfar.cboid,tbl_pepfar.countyid,CASE sex_id WHEN 'SMAL' THEN 'Female' ELSE 
 CASE 
 WHEN CAST(COUNT(DISTINCT domain) AS integer) between 1 and 2 then '1or2 Services'
 WHEN CAST(COUNT(DISTINCT domain) AS integer) > 2 then '3orMore Services'
-ELSE '1or2 Services'
+ELSE 'Not Served with any Services'
 END AS NumberofServices
 into TEMP temp_pepfarsummary
 	FROM	(SELECT person_id, CBO, ward, item_description, 
 		County,
 		sex_id,
 		CASE
-		WHEN date_part('year', age(timestamp '30-mar-2018', date_of_birth)) < 1 THEN 'a.[<1yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		WHEN date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
 		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,Countyid,domain
 		FROM  vw_cpims_services
 		WHERE  vw_cpims_services.cboid in ({cbos}) AND
-						 (date_of_event BETWEEN '01-jan-2017' AND '30-mar-2018')
+						 (date_of_event BETWEEN '{start_date}' AND '{end_date}')
 		GROUP BY person_id, CBO, ward, item_description, 
 		County,sex_id,date_of_birth,cboid,Countyid,domain
 
@@ -409,16 +409,16 @@ into TEMP temp_pepfarsummary
 		County,
 		sex_id,
 		CASE
-		WHEN date_part('year', age(timestamp '30-mar-2018', date_of_birth)) < 1 THEN 'a.[<1yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
-		WHEN  date_part('year', age(timestamp '30-mar-2018', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+		WHEN date_part('year', age(timestamp '{end_date}', date_of_birth)) < 1 THEN 'a.[<1yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+		WHEN  date_part('year', age(timestamp '{end_date}', date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
 		ELSE 'g.[25+yrs]' END AS AgeRange,cboid,Countyid,domain
 		FROM vw_cpims_assessments 
 		WHERE vw_cpims_assessments.cboid in ({cbos}) AND (domain in ('DHNU','DPSS'))
-		AND (date_of_event BETWEEN '01-jan-2017' AND '30-mar-2018')
+		AND (date_of_event BETWEEN '{start_date}' AND '{end_date}')
 		GROUP BY person_id, CBO, ward, item_description, 
 		County,
 		sex_id,date_of_birth,cboid,Countyid,domain) tbl_pepfar
@@ -427,123 +427,123 @@ INNER JOIN
 group by CBO, ward, County,AgeRange,tbl_pepfar.cboid,tbl_pepfar.countyid,Gender,CboActive,tbl_pepfar.domain;
 
 --select records from tempPepfarsummary
-select OVCCount, CBO, ward, County,AgeRange,
+select OVCCount, temp_pepfarsummary."CBO", ward, temp_pepfarsummary."County",AgeRange,
 cboid,countyid, Gender,CboActive,NumberofServices
 from temp_pepfarsummary
 
 UNION ALL
 --purge using zeros for missing data to maintain the output structure
-select DISTINCT CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+select DISTINCT CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, temp_pepfarsummary."County",'a.[<1yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'a.[<1yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'b.[1-4yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'b.[1-4yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'c.[5-9yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'c.[5-9yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'d.[10-14yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'d.[10-14yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'e.[15-17yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'e.[15-17yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'f.[18-24yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'f.[18-24yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'g.[25+yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'g.[25+yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'1or2 Services' AS NumberofServices
 from temp_pepfarsummary
 
 UNION ALL
 --purge using zeros for missing data to maintain the output structure
-select DISTINCT CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+select DISTINCT CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'a.[<1yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services' AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'a.[<1yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'a.[<1yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'b.[1-4yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'b.[1-4yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'b.[1-4yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount,temp_pepfarsummary."CBO", ward, County,'c.[5-9yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'c.[5-9yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'c.[5-9yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'d.[10-14yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'d.[10-14yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'d.[10-14yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'e.[15-17yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'e.[15-17yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'e.[15-17yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'f.[18-24yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'f.[18-24yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'f.[18-24yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'g.[25+yrs]' as AgeRange,
 cboid,countyid, 'Female' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary
 UNION ALL
-select DISTINCT  CAST('0' AS integer) as OVCCount, CBO, ward, County,'g.[25+yrs]' as AgeRange,
+select DISTINCT  CAST('0' AS integer) as OVCCount, temp_pepfarsummary."CBO", ward, County,'g.[25+yrs]' as AgeRange,
 cboid,countyid, 'Male' as Gender,CboActive,'3orMore Services'  AS NumberofServices
 from temp_pepfarsummary;
 '''
