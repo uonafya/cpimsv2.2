@@ -30,11 +30,13 @@ def get_dashboard(request):
     try:
         user_key = 'dash_%s' % (request.user.id)
         value = mc.get(user_key)
+        '''
         if value:
             print 'In memcache Dashboard - %s' % (user_key)
             return value
         else:
             print 'Set new Dashboard - %s' % (user_key)
+        '''
         dash = dashboard()
         start_date = datetime.now() - timedelta(days=21)
         summary = {}
@@ -44,7 +46,6 @@ def get_dashboard(request):
         summary['workforce'] = '{:,}'.format(dash['workforce_members'])
         summary['cases'] = '{:,}'.format(dash['case_records'])
         summary['pending'] = '{:08}'.format(dash['pending_cases'])
-        summary['hiv_status'] = dash['hiv_status']
         # OVC care
         odash = ovc_dashboard(request)
         ovc = {}
@@ -56,6 +57,8 @@ def get_dashboard(request):
         ovc['cases'] = '{:,}'.format(odash['case_records'])
         ovc['pending'] = '{:08}'.format(odash['pending_cases'])
         ovc['household'] = 0
+        ovc['hiv_status'] = odash['hiv_status']
+        ovc['domain_hiv_status'] = odash['domain_hiv_status']
         child_regs = odash['child_regs']
         ovc_regs = odash['ovc_regs']
         case_regs = odash['case_regs']
