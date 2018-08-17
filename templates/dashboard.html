@@ -535,11 +535,11 @@ National
 
 			parsed_ovc_HSTP_rate=parseFloat(ovc_HSTP_rate.replace("/", "")).toFixed(2)
 			parsed_ovc_HSTN_rate=parseFloat(ovc_HSTN_rate.replace("/", "")).toFixed(2)
-			parsed_ovc_unknown_count_rate=parseFloat(ovc_unknown_count_rate.replace("/", "")).toFixed(2)
+			parsed_ovc_unknown_count_rate=parseInt(ovc_unknown_count_rate.replace("/", ""))
 			parsed_on_art_rate=parseFloat(on_art_rate.replace("/", "")).toFixed(2)
-			parsed_not_on_art_rate=parseFloat(not_on_art_rate.replace("/", "")).toFixed(3)
+			parsed_not_on_art_rate=parseInt(not_on_art_rate.replace("/", ""))
 			//parsed_not_on_art_rate=parseFloat(not_on_art_rate.replace("/", "")).toFixed(2)
-			parsed_not_suppresed_rate=parseFloat(not_suppresed_rate.replace("/", "")).toFixed(2)
+			parsed_not_suppresed_rate=parseInt(not_suppresed_rate.replace("/", ""))
 			parsed_suppresed_rate=parseFloat(suppresed_rate.replace("/", "")).toFixed(2)
 
 			var ovc_HSTP_r=[[0, parsed_ovc_HSTP_rate]] ;

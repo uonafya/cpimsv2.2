@@ -78,90 +78,35 @@ def get_hiv_suppression_stats(request,org_ids):
     return suppressed, not_suppressed
 
 
-def get_super_user_hiv_dashboard_stats(request,org_ids):
-    ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP = 0, 0, 0, 0, 0
-    with connection.cursor() as cursor:
-        try:
-            cursor.execute(
-                "Select count(*)  from ovc_registration"
-            )
-            row = cursor.fetchone()
-            ovc_reg_all_count = row[0]
-
-            cursor.execute(
-                "select count(*) from ovc_registration where hiv_status='HSTP' or hiv_status= 'HSTN'"
-            )
-            row = cursor.fetchone()
-            ovc_reg_known_count = row[0]
-
-            cursor.execute(
-                "select count(*) from ovc_registration where hiv_status = 'HSTP'"
-            )
-            row = cursor.fetchone()
-            ovc_HSTP = row[0]
-
-            ovc_unknown_count = ovc_reg_all_count - ovc_reg_known_count
-
-
-            cursor.execute(
-                "select count(*) from ovc_registration where art_status='ARAR'"
-
-            )
-            row = cursor.fetchone()
-            on_art = row[0]
-
-            cursor.execute(
-                "select  count(*) from ovc_registration where  hiv_status = 'HSTN'"
-            )
-            row = cursor.fetchone()
-
-            ovc_HSTN = row[0]
-            not_on_art = ovc_HSTP - on_art
-
-        except Exception, e:
-            print 'error on get_super_user_hiv_dashboard_stats - %s' % (str(e))
-
-    return ovc_unknown_count,ovc_HSTN, on_art, not_on_art, ovc_HSTP
-
-
-def get_normal_user_hiv_dashboard_stats(request,org_ids):
+def get_hiv_dashboard_stats(request,org_ids,super_user=False):
     ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP = 0, 0, 0, 0, 0
     ids = ','.join(str(e) for e in org_ids)
     with connection.cursor() as cursor:
         try:
-            cursor.execute(
-                "Select count(person_id)  from ovc_registration where child_cbo_id in ({0})".format(ids)
-            )
-            row = cursor.fetchone()
-            ovc_reg_all_count = row[0]
+            if super_user:
+                cursor.execute(
+                    '''select count(*),art_status,hiv_status from ovc_registration  group by hiv_status,art_status'''
+                )
+            else:
+                cursor.execute(
+                    "select count(*),art_status,hiv_status from ovc_registration where child_cbo_id in ({0}) group by hiv_status,art_status".format(ids)
+                )
+            row = cursor.fetchall()
+            on_art = 0
+            ovc_HSTP = 0
+            ovc_HSTN = 0
+            ovc_reg_all_count = 0
+            for x in row:
+                if x[1] == 'ARAR':
+                    on_art += x[0]
+                if x[2] == 'HSTP':
+                    ovc_HSTP += x[0]
+                if x[2] == 'HSTN':
+                    ovc_HSTN += x[0]
+                ovc_reg_all_count += x[0]
 
-            cursor.execute(
-                "select count(person_id) from ovc_registration where (hiv_status='HSTP' or hiv_status= 'HSTN') and child_cbo_id in ({0})".format(ids)
-            )
-
-            row = cursor.fetchone()
-            ovc_reg_known_count = row[0]
-
-            cursor.execute(
-                "select count(person_id) from ovc_registration where hiv_status = 'HSTP' and child_cbo_id in ({0})".format(ids)
-            )
-            row = cursor.fetchone()
-            ovc_HSTP = row[0]
-
+                ovc_reg_known_count = ovc_HSTN + ovc_HSTP
             ovc_unknown_count = ovc_reg_all_count - ovc_reg_known_count
-
-            cursor.execute(
-                "select count(person_id) from ovc_registration where art_status='ARAR' and child_cbo_id in ({0})".format(ids)
-
-            )
-            row = cursor.fetchone()
-            on_art = row[0]
-
-            cursor.execute(
-                "select  count(person_id) from ovc_registration where  hiv_status = 'HSTN' and child_cbo_id in ({0})".format(ids)
-            )
-            row = cursor.fetchone()
-            ovc_HSTN = row[0]
             not_on_art = ovc_HSTP - on_art
 
         except Exception, e:
@@ -175,9 +120,9 @@ def get_ovc_hiv_status(request,org_ids):
     hiv_status_list_envelop=[]
     print "The organisation unit {} #".format(org_ids)
     if request.user.is_superuser:
-        hiv_stats = get_super_user_hiv_dashboard_stats(request,org_ids)
+        hiv_stats = get_hiv_dashboard_stats(request,org_ids,True)
     else:
-        hiv_stats = get_normal_user_hiv_dashboard_stats(request,org_ids)
+        hiv_stats = get_hiv_dashboard_stats(request,org_ids,False)
 
     supression = get_hiv_suppression_stats(request,org_ids)
     hiv_status['ovc_unknown_count'] = hiv_stats[0]
