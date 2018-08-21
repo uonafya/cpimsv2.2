@@ -1,17 +1,17 @@
 $(document).ready(function() {
 
-    var hiv_positive = parseInt($('[name="hiv_positive_f"]').val());
-    var HIV_positive_on_arv = parseInt($('[name="HIV_positive_on_arv_f"]').val());
-    var HIV_positive_not_on_arv = parseInt($('[name="HIV_positive_not_on_arv-f"]').val());
-    var HIV_negative = parseInt($('[name="HIV_negative_f"]').val());
-    var HIV_unknown_status = parseInt($('[name="HIV_unknown_status_f"]').val());
+    var hiv_positive_f = parseInt($('[name="hiv_positive_f"]').val());
+    var HIV_positive_on_arv_f = parseInt($('[name="HIV_positive_on_arv_f"]').val());
+    var HIV_positive_not_on_arv_f = parseInt($('[name="HIV_positive_not_on_arv_f"]').val());
+    var HIV_negative_f = parseInt($('[name="HIV_negative_f"]').val());
+    var HIV_unknown_status_f = parseInt($('[name="HIV_unknown_status_f"]').val());
 
-    var hiv_positive = parseInt($('[name="hiv_positive_m"]').val())
-    var HIV_positive_on_arv = parseInt($('[name="HIV_positive_on_arv_m"]').val())
-    var HIV_positive_not_on_arv = parseInt($('[name="HIV_positive_not_on_arv_m"]').val())
+    var hiv_positive_m = parseInt($('[name="hiv_positive_m"]').val())
+    var HIV_positive_on_arv_m = parseInt($('[name="HIV_positive_on_arv_m"]').val())
+    var HIV_positive_not_on_arv_m = parseInt($('[name="HIV_positive_not_on_arv_m"]').val())
 
-    var HIV_negative = parseInt($('[name="HIV_negative_m"]').val())
-    var HIV_unknown_status =parseInt($('[name="HIV_unknown_status_m"]').val())
+    var HIV_negative_m = parseInt($('[name="HIV_negative_m"]').val())
+    var HIV_unknown_status_m =parseInt($('[name="HIV_unknown_status_m"]').val())
 
     add_ovc_domain_hiv_status();
     add_ovc_domain_hiv_status_negative();
@@ -54,21 +54,21 @@ $(document).ready(function() {
                 }
 
 
-            var hiv_positive_f = [[0, hiv_positive]] ;
-            var HIV_positive_on_arv_f = [[1, HIV_positive_on_arv]] ;
-            var HIV_positive_not_on_arv_f = [[2, HIV_positive_not_on_arv]] ;
-            var hiv_positive_m = [[0, hiv_positive]] ;
-            var HIV_positive_on_arv_m = [[1, HIV_positive_on_arv]] ;
-            var HIV_positive_not_on_arv_m = [[2, HIV_positive_not_on_arv]] ;
+            var hiv_positive_female = [[0, hiv_positive_f]] ;
+            var HIV_positive_on_arv_female = [[1, HIV_positive_on_arv_f]] ;
+            var HIV_positive_not_on_arv_female = [[2, HIV_positive_not_on_arv_f]] ;
+            var hiv_positive_male = [[0, hiv_positive_m]] ;
+            var HIV_positive_on_arv_male = [[1, HIV_positive_on_arv_m]] ;
+            var HIV_positive_not_on_arv_male = [[2, HIV_positive_not_on_arv_m]] ;
 
 
 			var data3= [
-						{ data: hiv_positive_m, color: blueDark, label: 'Male HIV positive', bars: { fillColor: blueDark } } ,
-						{ data: hiv_positive_f, color: red, label: 'Female HIV positive', bars: { fillColor: red } } ,
-						{ data: HIV_positive_on_arv_m, color: blueDark, label: 'Male HIV positive on arv', bars: { fillColor: blueDark } },
-						{ data: HIV_positive_on_arv_f, color: red, label: 'Female HIV positive on arv', bars: { fillColor: red } },
-						{ data: HIV_positive_not_on_arv_m, color: blueDark, label: 'Male HIV positive not on arv', bars: { fillColor: blueDark } } ,
-						{ data: HIV_positive_not_on_arv_f, color: red, label: 'Female HIV positive not on arv', bars: { fillColor: red } } ,
+						{ data: hiv_positive_male, color: blueDark, label: 'Male HIV positive', bars: { fillColor: blueDark } } ,
+						{ data: hiv_positive_female, color: red, label: 'Female HIV positive', bars: { fillColor: red } } ,
+						{ data: HIV_positive_on_arv_male, color: blueDark, label: 'Male HIV positive on arv', bars: { fillColor: blueDark } },
+						{ data: HIV_positive_on_arv_female, color: red, label: 'Female HIV positive on arv', bars: { fillColor: red } },
+						{ data: HIV_positive_not_on_arv_male, color: blueDark, label: 'Male HIV positive not on arv', bars: { fillColor: blueDark } } ,
+						{ data: HIV_positive_not_on_arv_female, color: red, label: 'Female HIV positive not on arv', bars: { fillColor: red } } ,
 					];
 
 			$.plot($("#domain_hiv_status"), data3, options);
@@ -133,20 +133,20 @@ $(document).ready(function() {
                     }).appendTo("body").fadeIn(200);
                 }
 
-            var hiv_positive_f = [[0, hiv_positive]] ;
-            var HIV_negative_f = [[1, HIV_negative]] ;
-            var HIV_unknown_status_f = [[2, HIV_unknown_status]] ;
-            var hiv_positive_m = [[0, hiv_positive]] ;
-            var HIV_negative_m = [[1, HIV_negative]] ;
-            var HIV_unknown_status_m = [[2, HIV_unknown_status]] ;
+            var hiv_positive_female = [[0, hiv_positive_f]] ;
+            var HIV_negative_female = [[1, HIV_negative_f]] ;
+            var HIV_unknown_status_female = [[2, HIV_unknown_status_f]] ;
+            var hiv_positive_male = [[0, hiv_positive_m]] ;
+            var HIV_negative_male = [[1, HIV_negative_m]] ;
+            var HIV_unknown_status_male = [[2, HIV_unknown_status_m]] ;
 
 			var data3= [
-						{ data: hiv_positive_m, color: blueDark, label: 'Male HIV positive', bars: { fillColor: blueDark } } ,
-						{ data: hiv_positive_f, color: red, label: 'Female HIV positive', bars: { fillColor: red } } ,
-						{ data: HIV_negative_m, color: blueDark, label: 'Male HIV negative', bars: { fillColor: blueDark } },
-						{ data: HIV_negative_f, color: red, label: 'Female HIV negative', bars: { fillColor: red } },
-						{ data: HIV_unknown_status_m, color: blueDark, label: 'Male Unknown Status', bars: { fillColor: blueDark } },
-						{ data: HIV_unknown_status_f, color: red, label: 'Female Unknown Status', bars: { fillColor: red } }
+						{ data: hiv_positive_male, color: blueDark, label: 'Male HIV positive', bars: { fillColor: blueDark } } ,
+						{ data: hiv_positive_female, color: red, label: 'Female HIV positive', bars: { fillColor: red } } ,
+						{ data: HIV_negative_male, color: blueDark, label: 'Male HIV negative', bars: { fillColor: blueDark } },
+						{ data: HIV_negative_female, color: red, label: 'Female HIV negative', bars: { fillColor: red } },
+						{ data: HIV_unknown_status_male, color: blueDark, label: 'Male Unknown Status', bars: { fillColor: blueDark } },
+						{ data: HIV_unknown_status_female, color: red, label: 'Female Unknown Status', bars: { fillColor: red } }
 					];
 
 			$.plot($("#domain_hiv_status_negative"), data3, options);

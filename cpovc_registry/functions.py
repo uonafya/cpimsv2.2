@@ -249,7 +249,7 @@ def get_ovc_domain_hiv_status(request,org_ids):
                 hiv_domain_status['HIV_unknown_status_m'] = x['OVCCOUNT']
             else:
                 pass
-
+        print hiv_domain_status
         hiv_domain_status_list_envelop.append(hiv_domain_status)
 
     except Exception, e:
