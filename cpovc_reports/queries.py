@@ -27,6 +27,7 @@ REPORTS[15] = 'ovc_overall_view'
 REPORTS[18] = 'datim_mer'
 REPORTS[19] = 'assessments_needs_services_detailed'
 REPORTS[20] = 'assessments_needs_services_summary'
+REPORTS[21] = 'exits'
 
 # Master List
 QUERIES['master_list'] = '''
@@ -64,6 +65,11 @@ and  ((exit_status = 'ACTIVE' and registration_date <= '{end_date}')
 
 # Registration List
 QUERIES['registration_list'] = '''
+select * from vw_cpims_registration where cbo_id in ({cbos}) 
+and vw_cpims_registration.registration_date between '{start_date}' and '{end_date}'
+order by chv_id , dob ASC;
+'''
+QUERIES['registration_list_bkup'] = '''
 select reg_org_unit.org_unit_name AS CBO,
 reg_person.first_name, reg_person.other_names, reg_person.surname,
 reg_person.date_of_birth, registration_date,
@@ -2788,4 +2794,29 @@ sex_id,domain,date_part('year', age(timestamp '{end_date}', date_of_birth))
 
 ) tbl_pepfar
 group by CBO, ward, County,AgeRange,Gender,domain,Indicator
+'''
+
+QUERIES['exits'] = '''
+SELECT count (distinct vw_cpims_exits.person_id) as OVCCOUNT, vw_cpims_exits.cbo_id, cbo, vw_cpims_exits.ward_id, ward, datimexitreason, Agerange,
+
+case
+WHEN date_part('year', age(timestamp '{end_date}',vw_cpims_registration.dob)) < 1 THEN 'a.[<1yrs]'
+
+WHEN  date_part('year', age(timestamp '{end_date}', vw_cpims_registration.dob)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+
+WHEN  date_part('year', age(timestamp '{end_date}', vw_cpims_registration.dob)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+
+WHEN  date_part('year', age(timestamp '{end_date}', vw_cpims_registration.dob)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+
+WHEN  date_part('year', age(timestamp '{end_date}', vw_cpims_registration.dob)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+
+WHEN  date_part('year', age(timestamp '{end_date}', vw_cpims_registration.dob)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+
+ELSE 'g.[25+yrs]' END AS AgeRange
+
+from vw_cpims_exits
+left outer join vw_cpims_registration
+on vw_cpims_exits.person_id=vw_cpims_registration.cpims_ovc_id
+where vw_cpims_exits.cbo_id in ({cbos}) and vw_cpims_exits.exit_date between '{start_date}' AND '{end_date}'
+group by vw_cpims_exits.cbo_id, cbo, vw_cpims_exits.ward_id, ward, datimexitreason, vw_cpims_registration.dob, Agerange;
 '''
