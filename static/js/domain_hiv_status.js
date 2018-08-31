@@ -6,12 +6,12 @@ $(document).ready(function() {
     var HIV_negative_f = parseInt($('[name="HIV_negative_f"]').val());
     var HIV_unknown_status_f = parseInt($('[name="HIV_unknown_status_f"]').val());
 
-    var hiv_positive_m = parseInt($('[name="hiv_positive_m"]').val())
-    var HIV_positive_on_arv_m = parseInt($('[name="HIV_positive_on_arv_m"]').val())
-    var HIV_positive_not_on_arv_m = parseInt($('[name="HIV_positive_not_on_arv_m"]').val())
+    var hiv_positive_m = parseInt($('[name="hiv_positive_m"]').val());
+    var HIV_positive_on_arv_m = parseInt($('[name="HIV_positive_on_arv_m"]').val());
+    var HIV_positive_not_on_arv_m = parseInt($('[name="HIV_positive_not_on_arv_m"]').val());
 
-    var HIV_negative_m = parseInt($('[name="HIV_negative_m"]').val())
-    var HIV_unknown_status_m =parseInt($('[name="HIV_unknown_status_m"]').val())
+    var HIV_negative_m = parseInt($('[name="HIV_negative_m"]').val());
+    var HIV_unknown_status_m =parseInt($('[name="HIV_unknown_status_m"]').val());
 
     add_ovc_domain_hiv_status();
     add_ovc_domain_hiv_status_negative();
