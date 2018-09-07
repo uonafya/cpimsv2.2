@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block page_title %} Organization Unit Search {% endblock %}
+
+{% load app_filters %}
+
+{% block style_code %}
+    <link href="{% static 'plugins/parsley/src/parsley.css' %}" rel="stylesheet" />
+    <link href="{% static 'plugins/datatables/css/data-table.css' %}" rel="stylesheet" />
+    <link href="{% static 'plugins/select2/dist/css/select2.min.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block primary %}
+<!-- begin breadcrumb -->
+<ol class="breadcrumb pull-right">
+	<li><a href="#">Home</a></li>
+	<li class="active">Transfer CBOs</li>
+</ol>
+<!-- end breadcrumb -->
+<!-- begin page-header -->
+<h1 class="page-header">Organizational Unit Registry <small>Transfer CBOs</small></h1>
+<!-- end page-header -->
+{% if messages %}
+    {% for message in messages %}
+    {% if 'error' in message.tags %}
+        <div id="messages" class="alert alert-danger fade in">
+        <span class="close" data-dismiss="alert">×</span>
+        <i class="fa fa-info fa-2x pull-left"></i>
+    {% else %}
+        <div id="messages" class="alert alert-success fade in">
+        <span class="close" data-dismiss="alert">×</span>
+        <i class="fa fa-check fa-2x pull-left"></i>
+    {% endif %}
+        
+    	<p>{{ message }}</p>
+    </div>
+   {% endfor %}
+{% endif %}
+{% if message %}
+	<div id="messages" class="alert alert-success fade in">
+	    <span class="close" data-dismiss="alert">×</span>
+	    <i class="fa fa-check fa-2x pull-left"></i>
+	    <p class="invalid-form-message"> {{ message }}</p>
+	</div>
+{% endif %}
+<!-- begin row -->
+<div class="row">
+			    <div class="col-md-6 col-md-offset-3">
+                    <div class="panel panel-inverse" data-sortable-id="form-stuff-3">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">{{ org_unit.org_unit_name }}</h4>
+                        </div>
+                        <div class="panel-body">
+                            <form action="{% url 'list-orgunit-cbos' org_unit.id %}" method="POST">
+                            {% csrf_token %}
+                                <fieldset>
+                                    <legend>OVCS
+                                        <small>{{ ovcs.count }}</small>
+                                    </legend>
+                                    <label for="cbos_list">CBOS List</label>
+                                    <select title="CBOS List" name="cbos_list" class="form-control selectpicker"
+                                            data-size="10">
+                                        <option value="" selected="">Select a CBO</option>
+                                        {% for cbo in cbos %}
+                                            <option value="{{ cbo.id }}">{{ cbo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary m-r-5">Transfer</button>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+
+			    </div>
+			</div>
+<!-- end row -->
+{% endblock %}
+
+{% block javascript_code %}
+<script src="{% static 'plugins/select2/dist/js/select2.min.js' %}"></script>
+    <script>
+    $(document).ready(function() {
+    $('#cbos_list').select2();
+});
+    </script>
+{% endblock %}

@@ -1694,3 +1694,85 @@ def person_actions(request):
     except Exception, e:
         print 'Error on persons query - %s' % (str(e))
         raise e
+
+
+@login_required(login_url='/')
+@is_allowed_groups(['RGM', 'RGU', 'DSU', 'STD'])
+def transfer_home(request):
+    """Search page for Organisation Unit / Default page."""
+    try:
+        orgs = get_list_types()
+        if request.method == 'POST':
+            form = FormRegistry(data=request.POST)
+            search_string = request.POST.get('org_unit_name')
+            org_type = request.POST.get('org_type')
+            org_category = request.POST.get('org_category')
+            org_closed = request.POST.get('org_closed')
+
+            closed_org = True if org_closed == 'on' else False
+            unit_type = [org_type] if org_type else []
+            if org_category and not org_type:
+                this_orgs = orgs[org_category]
+                unit_type = []
+                for org in this_orgs:
+                    unit_type.append(org.split(',', 1)[0])
+            if search_string:
+                results = get_list_of_org_units(
+                    search_string=search_string,
+                    include_closed=closed_org,
+                    in_org_unit_types=unit_type,
+                    number_of_results=50)
+            else:
+                results = search_org_units(unit_type, closed_org)
+            items = 'result' if len(results) == 1 else 'results'
+            ids = []
+            for result in results:
+                ids.append(result.id)
+            geo_names = names_from_ids(ids)
+            msg_text = 'for %s' % (search_string) if search_string else ''
+            message = "Search %s returned %d %s" % (msg_text,
+                                                    len(results),
+                                                    items)
+            check_fields = ['org_unit_type_id', 'committee_unit_type_id',
+                            'adoption_unit_type_id', 'si_unit_type_id',
+                            'cci_unit_type_id', 'ngo_unit_type_id',
+                            'government_unit_type_id']
+            val = get_dict(field_name=check_fields)
+            # All existing org units
+            org_units_dict = get_org_units_dict()
+            vals = merge_two_dicts(val, org_units_dict)
+            return render(request, 'registry/org_units_transfer.html',
+                          {'form': form, 'results': results,
+                           'geos': geo_names, 'orgs': orgs,
+                           'org_category': org_type,
+                           'message': message, 'vals': vals})
+        form = FormRegistry()
+        query = request.GET.get('q')
+        if query:
+            results = auto_suggest_person(request, query)
+            return JsonResponse(results, content_type='application/json',
+                                safe=False)
+        return render(request, 'registry/org_units_transfer.html',
+                      {'form': form, 'orgs': orgs})
+    except Exception, e:
+        print str(e)
+        raise e
+
+
+def list_orgunit_cbos(request, org_id):
+    org_unit = RegOrgUnit.objects.get(pk=org_id)
+    ovcs = org_unit.ovcregistration_set.all()
+    cbos = RegOrgUnit.objects.filter(org_unit_type_id='TNCB')
+    context = {
+        'org_unit': org_unit,
+        'ovcs': ovcs,
+        'cbos': cbos
+    }
+    if request.method == 'POST':
+        cbo_id = request.POST.get('cbos_list')
+        org_unit_updated = RegOrgUnit.objects.get(id=cbo_id)
+        print cbo_id, org_unit_updated
+        ovcs.update(child_cbo=org_unit_updated)
+        print 'success'
+    return render(request, 'registry/org_units_cbo_transfer.html', context)
+

@@ -17,6 +17,38 @@
 		<ul class="sub-menu">
 			<li><a href="{% url 'registry' %}">Organizational Units</a></li>
 			<li><a href="{% url 'search_persons' %}">Persons Registry</a></li>
+            <li class="has-sub">
+				<a href="#">
+				    <b class="caret pull-right"></b>
+				    <i class="fa fa-align-left"></i>
+				    <span>Migrations</span>
+				</a>
+				<ul class="sub-menu">
+					<li class="has-sub">
+                        <a href="#">
+                            <b class="caret pull-right"></b>
+                            <i class="fa fa-align-left"></i>
+                            <span>Transfer</span>
+                        </a>
+                        <ul class="sub-menu">
+                            <li><a href="#">OVC</a></li>
+                            <li><a href="{% url 'transfer_registry' %}">CHV</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-sub">
+                        <a href="#">
+                            <b class="caret pull-right"></b>
+                            <i class="fa fa-align-left"></i>
+                            <span>Geo</span>
+                        </a>
+                        <ul class="sub-menu">
+                            <li><a href="#">Ward</a></li>
+                            <li><a href="#">Constituency</a></li>
+                            <li><a href="#">County</a></li>
+                        </ul>
+                    </li>
+				</ul>
+             </li>
 		</ul>
 	</li>
 	
