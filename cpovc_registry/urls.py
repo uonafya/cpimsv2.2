@@ -9,6 +9,8 @@ urlpatterns = patterns(
     url(r'^ou/view/(?P<org_id>\d+)/$', 'register_details',
         name='register_details'),
     url(r'^ou/edit/(?P<org_id>\d+)/$', 'register_edit', name='registry_edit'),
+    url(r'^ou/tranfer/$', 'transfer_home', name='transfer_registry'),
+    url(r'^ou/list/(?P<org_id>\d+)/$', 'list_orgunit_cbos', name='list-orgunit-cbos'),
     url(r'^person/search/$', 'persons_search', name='search_persons'),
     url(r'^person/user/(?P<id>\d+)/$', 'new_user', name='new_user'),
     url(r'^person/$', 'person_actions', name='person_actions'),
