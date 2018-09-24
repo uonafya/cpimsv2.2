@@ -114,6 +114,53 @@ def get_hiv_dashboard_stats(request,org_ids,super_user=False):
 
     return ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP
 
+def get_public_dash_ovc_hiv_status():
+    # "SELECT count(ovccount) FROM public.hiv_status where "
+    rows2, desc2 = run_sql_data(None, "Select count(*),gender,art_status,hiv_status from public.persons group by gender,art_status,hiv_status")
+    print "-----------------------------------------"
+    hiv_domain_status_list_envelop=[]
+    hiv_domain_status = {}
+    hiv_domain_status['hiv_positive_f']=0
+    hiv_domain_status['HIV_positive_on_arv_f']=0
+    hiv_domain_status['HIV_positive_not_on_arv_f']=0
+    hiv_domain_status['HIV_negative_f'] =0
+    hiv_domain_status['HIV_unknown_status_f']=0
+    hiv_domain_status['hiv_positive_m'] = 0
+    hiv_domain_status['HIV_positive_on_arv_m'] =0
+    hiv_domain_status['HIV_positive_not_on_arv_m'] =0
+    hiv_domain_status['HIV_negative_m'] =0
+    hiv_domain_status['HIV_unknown_status_m'] =0
+
+    for x in rows2:
+        print x
+        domain = x['ART_STATUS']
+        hiv_stats = x['HIV_STATUS']
+        gender = x['GENDER']
+
+        if "2a. (i) OVC_HIVSTAT: HIV+" in hiv_stats and gender == 'Female':
+            hiv_domain_status['hiv_positive_f'] += x['COUNT']
+        if "2a. (ii) OVC_HIVSTAT: HIV+ on ARV" in domain and gender == 'Female':
+            hiv_domain_status['HIV_positive_on_arv_f'] += x['COUNT']
+        if "2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV" in domain and gender == 'Female':
+            hiv_domain_status['HIV_positive_not_on_arv_f'] += x['COUNT']
+        if "2b. OVC_HIVSTAT: HIV-" in hiv_stats and gender == 'Female':
+            hiv_domain_status['HIV_negative_f'] += x['COUNT']
+        if "HIV Status NOT Known" in hiv_stats and gender == 'Female':
+            hiv_domain_status['HIV_unknown_status_f'] += x['COUNT']
+        if "2a. (i) OVC_HIVSTAT: HIV+" in hiv_stats and gender == 'Male':
+            hiv_domain_status['hiv_positive_m'] += x['COUNT']
+        if "2a. (ii) OVC_HIVSTAT: HIV+ on ARV" in domain and gender == 'Male':
+            hiv_domain_status['HIV_positive_on_arv_m'] += x['COUNT']
+        if "2a. (iii) OVC_HIVSTAT: HIV+ NOT on ARV" in domain and gender == 'Male':
+            hiv_domain_status['HIV_positive_not_on_arv_m'] += x['COUNT']
+        if "2b. OVC_HIVSTAT: HIV-" in hiv_stats and gender == 'Male':
+            hiv_domain_status['HIV_negative_m'] += x['COUNT']
+        if 'HIV Status NOT Known' in hiv_stats:
+            hiv_domain_status['HIV_unknown_status_m'] += x['COUNT']
+
+    #print hiv_domain_status
+    hiv_domain_status_list_envelop.append(hiv_domain_status)
+    return hiv_domain_status_list_envelop
 
 def get_ovc_hiv_status(request,org_ids):
     hiv_status={}

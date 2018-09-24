@@ -3,13 +3,27 @@ import memcache
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import JsonResponse
-from cpovc_registry.functions import dashboard, ovc_dashboard
+from cpovc_registry.functions import dashboard, ovc_dashboard, get_public_dash_ovc_hiv_status
 from cpovc_main.functions import get_dict
 from cpovc_access.functions import access_request
 from django.contrib.auth.decorators import login_required
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
+def public_dash(request):
+    """Some default page for the home page / Dashboard."""
+    try:
+        print "we are here"
+        # vals = get_dashboard(request)
+        return render(request, 'public_dash.html')
+    except Exception, e:
+        print 'dashboard error - %s' % (str(e))
+        raise e
+
+def get_pub_data(request):
+    main_dash_data=get_public_dash_ovc_hiv_status()
+    return JsonResponse(main_dash_data, content_type='application/json',
+                        safe=False)
 
 @login_required(login_url='/login/')
 def home(request):
@@ -20,7 +34,6 @@ def home(request):
     except Exception, e:
         print 'dashboard error - %s' % (str(e))
         raise e
-
 
 def get_dashboard(request):
     """Some default page for the home page / Dashboard."""
