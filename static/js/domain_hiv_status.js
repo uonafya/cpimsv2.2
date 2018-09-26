@@ -149,8 +149,7 @@ $(document).ready(function() {
 						{ data: HIV_unknown_status_female, color: red, label: 'Female Unknown Status', bars: { fillColor: red } }
 					];
 
-			$.plot($("#domain_hiv_status_negative"), data3, options);
-
+			var p = $.plot($("#domain_hiv_status_negative"), data3, options);
 			var previousXValue = null;
 			var previousYValue = null;
 

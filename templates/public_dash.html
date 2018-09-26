@@ -40,11 +40,11 @@
                     <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i
                             class="icon-cog"></i> Locality <b class="caret"></b></a>
                         <ul class="dropdown-menu">
-                            <li><a href="javascript:;">National</a></li>
-                            <li><a href="javascript:;">County</a></li>
-                            <li><a href="javascript:;">Countituency</a></li>
-                            <li><a href="javascript:;">Sub County</a></li>
-                            <li><a href="javascript:;">Ward</a></li>
+                            <li id="national"><a href="javascript:;">National</a></li>
+                            <li id="county"><a href="javascript:;">County</a></li>
+                            <li id="countituency"><a href="javascript:;">Countituency</a></li>
+                            <li id="sub_county"><a href="javascript:;">Sub County</a></li>
+                            <li id="ward"><a href="javascript:;">Ward</a></li>
                         </ul>
                     </li>
                     <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i
@@ -106,11 +106,15 @@
 
 <div class="main">
     <div class="main-inner">
-        <div class="container-fluid">
-            <div class="row">
+        <div id="charts-board" class="container-fluid">
+            <div  class="row">
                 <div id="art_status_chart" class="col-sm-6"></div>
                 <div id="hiv_status_chart" class="col-sm-6"></div>
-            </div>
+            </div><br>
+
+            <div class="row">
+                <div id="cascade_90_chart" class="col-sm-6"></div>
+            </div> <br>
 
         </div>
         <!-- /container -->
@@ -147,9 +151,10 @@
 <script src="../static/js/public_dash/js/charts/highcharts.js"></script>
 
 <script src="../static/js/public_dash/js/charts/stacked-bar.js"></script>
+
 <script src="../static/js/public_dash/js/charts/hiv-stats.js"></script>
-
-
+<script src="../static/js/public_dash/js/charts/cascade-90-90-90.js"></script>
+<script src="../static/js/public_dash/js/events.js"></script>
 
 
 </body>

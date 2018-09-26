@@ -1,4 +1,4 @@
-function stackedBar(elementId,titlee,categoriee,serie){
+function stackedBar(elementId,titlee,categoriee,serie,stackType,legend){
     Highcharts.chart(elementId, {
         chart: {
             type: 'column'
@@ -23,10 +23,11 @@ function stackedBar(elementId,titlee,categoriee,serie){
             }
         },
         legend: {
+            layout: legend.layout,
             align: 'right',
-            x: -30,
-            verticalAlign: 'top',
-            y: 25,
+            x: legend.x,
+            verticalAlign: legend.verticalAlign,
+            y: legend.y,
             floating: true,
             backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
             borderColor: '#CCC',
@@ -39,7 +40,7 @@ function stackedBar(elementId,titlee,categoriee,serie){
         },
         plotOptions: {
             column: {
-                stacking: 'normal',
+                stacking: stackType,
                 dataLabels: {
                     enabled: true,
                     color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white'
@@ -47,7 +48,6 @@ function stackedBar(elementId,titlee,categoriee,serie){
             }
         },
         series: serie
-
 
     });
 

@@ -361,6 +361,7 @@ var handleStackedChart = function () {
             }
         }
     ];
+
     $.plot("#stacked-chart", xData, options);
 
     function showTooltip2(x, y, contents) {
@@ -404,7 +405,9 @@ var Dashboard = function () {
             handleVectorMap();
             handleDashboardDatepicker();
             handleDonutChart();
+
             handleStackedChart();
+
         }
     };
 }();

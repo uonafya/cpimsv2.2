@@ -3,7 +3,7 @@ import memcache
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import JsonResponse
-from cpovc_registry.functions import dashboard, ovc_dashboard, get_public_dash_ovc_hiv_status
+from cpovc_registry.functions import dashboard, ovc_dashboard, get_public_dash_ovc_hiv_status,get_ovc_hiv_status
 from cpovc_main.functions import get_dict
 from cpovc_access.functions import access_request
 from django.contrib.auth.decorators import login_required
@@ -20,9 +20,19 @@ def public_dash(request):
         print 'dashboard error - %s' % (str(e))
         raise e
 
-def get_pub_data(request):
+
+def get_pub_data(request,org_level,org_level_sub_level):
     main_dash_data=get_public_dash_ovc_hiv_status()
     return JsonResponse(main_dash_data, content_type='application/json',
+                        safe=False)
+
+
+def get_hiv_suppression_data(request,org_level,org_level_sub_level):
+    print "--------------------"
+    print org_level
+    print org_level_sub_level
+    hiv_suppression_data=get_ovc_hiv_status(request,None,org_level,org_level_sub_level)
+    return JsonResponse(hiv_suppression_data, content_type='application/json',
                         safe=False)
 
 @login_required(login_url='/login/')

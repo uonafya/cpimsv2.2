@@ -30,22 +30,26 @@ benficiary_id_prefix = 'B'
 workforce_id_prefix = 'W'
 
 
-def get_hiv_suppression_stats(request,org_ids):
+def get_hiv_suppression_stats(request,org_ids,level='national',sub_level=''):
     suppressed = 0
     not_suppressed = 0
-    ids = ','.join(str(e) for e in org_ids)
+    ids=None
+    try:
+        ids = ','.join(str(e) for e in org_ids)
+    except Exception, e:
+        pass
     # get suppresion stats
-    if request.user.is_superuser:
-
+    if request.user.is_superuser or ids is None or len(ids)==0:
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
                     "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
                     "where CAST (ovl.viral_load  AS Varchar) != 'lds' or ovl.viral_load < 1000"
-                    " and ovc.art_status = 'ARAR' and ovc.child_cbo_id in ({0})".format(ids)
+                    " and ovc.art_status = 'ARAR'"
                 )
                 suppressed = cursor.fetchall()[0][0]
-
+                print "gogogo"
+                print suppressed
                 cursor.execute(
                     "SELECT count(*) FROM ovc_viral_load ovl inner join ovc_registration ovc on CAST (ovl.person_id  AS Varchar) = CAST (ovc.id  AS Varchar) "
                     "where CAST (ovl.viral_load  AS Varchar) = 'lds' or ovl.viral_load > 1000"
@@ -78,9 +82,12 @@ def get_hiv_suppression_stats(request,org_ids):
     return suppressed, not_suppressed
 
 
-def get_hiv_dashboard_stats(request,org_ids,super_user=False):
+def get_hiv_dashboard_stats(request,org_ids,super_user=False,level='national',sub_level=''):
     ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP = 0, 0, 0, 0, 0
-    ids = ','.join(str(e) for e in org_ids)
+    try:
+        ids = ','.join(str(e) for e in org_ids)
+    except Exception, e:
+        pass
     with connection.cursor() as cursor:
         try:
             if super_user:
@@ -114,7 +121,7 @@ def get_hiv_dashboard_stats(request,org_ids,super_user=False):
 
     return ovc_unknown_count, ovc_HSTN, on_art, not_on_art, ovc_HSTP
 
-def get_public_dash_ovc_hiv_status():
+def get_public_dash_ovc_hiv_status(level='national',sub_level=''):
     # "SELECT count(ovccount) FROM public.hiv_status where "
     rows2, desc2 = run_sql_data(None, "Select count(*),gender,art_status,hiv_status from public.persons group by gender,art_status,hiv_status")
     print "-----------------------------------------"
@@ -162,16 +169,22 @@ def get_public_dash_ovc_hiv_status():
     hiv_domain_status_list_envelop.append(hiv_domain_status)
     return hiv_domain_status_list_envelop
 
-def get_ovc_hiv_status(request,org_ids):
+def get_ovc_hiv_status(request,org_ids,level='national',sub_level=''):
     hiv_status={}
     hiv_status_list_envelop=[]
     print "The organisation unit {} #".format(org_ids)
-    if request.user.is_superuser:
-        hiv_stats = get_hiv_dashboard_stats(request,org_ids,True)
+    is_super_user=False
+    try:
+        user=request.user.is_superuser
+        is_super_user = True
+    except Exception, e:
+        is_super_user=True
+    if is_super_user or org_ids is None or len(org_ids)==0:
+        hiv_stats = get_hiv_dashboard_stats(request,org_ids,True,level,sub_level)
     else:
-        hiv_stats = get_hiv_dashboard_stats(request,org_ids,False)
+        hiv_stats = get_hiv_dashboard_stats(request,org_ids,False,level,sub_level)
 
-    supression = get_hiv_suppression_stats(request,org_ids)
+    supression = get_hiv_suppression_stats(request,org_ids,level,sub_level)
     hiv_status['ovc_unknown_count'] = hiv_stats[0]
     hiv_status['ovc_HSTN'] = hiv_stats[1]
     hiv_status['on_art'] = hiv_stats[2]
