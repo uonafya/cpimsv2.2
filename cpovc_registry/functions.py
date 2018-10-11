@@ -123,8 +123,20 @@ def get_hiv_dashboard_stats(request,org_ids,super_user=False,level='national',su
 
 def get_public_dash_ovc_hiv_status(level='national',sub_level=''):
     # "SELECT count(ovccount) FROM public.hiv_status where "
-    rows2, desc2 = run_sql_data(None, "Select count(*),gender,art_status,hiv_status from public.persons group by gender,art_status,hiv_status")
-    print "-----------------------------------------"
+
+    rows2, desc2 =0,0
+    if level == 'national':
+        rows2, desc2 = run_sql_data(None, "Select count(*),gender,art_status,hiv_status from public.persons group by gender,art_status,hiv_status")
+    elif level == 'county':
+        rows2, desc2 = run_sql_data(None,
+                                    "Select count(*),gender,art_status,hiv_status from public.persons where area_type='{}'  group by gender,art_status,hiv_status".format(level))
+    elif level == 'constituency':
+        rows2, desc2 = run_sql_data(None,
+                                    "Select count(*),gender,art_status,hiv_status from public.persons where area_type='{}'  group by gender,art_status,hiv_status".format(level))
+    elif level == 'ward':
+        rows2, desc2 = run_sql_data(None,
+                                    "Select count(*),gender,art_status,hiv_status from public.persons where area_type='{}' group by gender,art_status,hiv_status".format(level))
+
     hiv_domain_status_list_envelop=[]
     hiv_domain_status = {}
     hiv_domain_status['hiv_positive_f']=0

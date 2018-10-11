@@ -22,7 +22,7 @@ def public_dash(request):
 
 
 def get_pub_data(request,org_level,org_level_sub_level):
-    main_dash_data=get_public_dash_ovc_hiv_status()
+    main_dash_data=get_public_dash_ovc_hiv_status(org_level,org_level_sub_level)
     return JsonResponse(main_dash_data, content_type='application/json',
                         safe=False)
 
