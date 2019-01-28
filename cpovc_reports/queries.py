@@ -23,6 +23,8 @@ REPORTS[12] = 'ovc_served_list'
 REPORTS[13] = 'master_list'
 REPORTS[14] = 'ovc_assessed_list'
 REPORTS[15] = 'ovc_overall_view'
+REPORTS[22] = 'viral_load'
+REPORTS[23] = 'caregivers_served'
 
 # Master List
 QUERIES['master_list'] = '''
@@ -2522,4 +2524,82 @@ FROM  (SELECT area_id, area_name, area_code, parent_area_id
 WHERE reg_org_unit.id in ({cbos}) AND (ovc_care_assessment.domain in ('DHNU','DPSS')) and (ovc_care_assessment.is_void = 'False') 
 AND (ovc_care_events.event_type_id = 'FSAM') AND (ovc_care_events.date_of_event BETWEEN '{start_date}' AND '{end_date}')
 )
+'''
+
+QUERIES['viral_load'] = '''
+select viral.viral_load, viral.viral_date, viral.person_id,  reg.cbo_id, reg.cbo, reg.ward_id, reg.ward, reg.subcounty, reg.countyid, reg.county, reg.cpims_ovc_id,
+reg.ovc_names, reg.gender, reg.dob, reg.age, reg.agerange, birthcert, reg.bcertnumber,
+reg.ovcdisability, reg.ncpwdnumber, reg.ovchivstatus, reg.artstatus, reg.facility_id,
+reg.facility, reg.date_of_linkage, reg.ccc_number, reg.chv_id, reg.chv_names, reg.caregiver_names,
+reg.caregiverhivstatus, reg.schoollevel, reg.school_id, reg.school_name, reg.class, reg.registration_date, reg.exit_status, reg.exit_reason, reg.exit_date, reg.immunization 
+
+from ovc_viral_load as viral left join vw_cpims_registration as reg on viral.person_id=reg.cpims_ovc_id 
+where reg.cbo_id in ({cbos})
+group by viral.viral_load, viral.viral_date, viral.person_id, reg.cbo_id, reg.cbo, reg.ward_id, reg.ward, reg.subcounty, reg.countyid, reg.county, reg.cpims_ovc_id,
+reg.ovc_names, reg.gender, reg.dob, reg.age, reg.agerange, birthcert, reg.bcertnumber,
+reg.ovcdisability, reg.ncpwdnumber, reg.ovchivstatus, reg.artstatus, reg.facility_id,
+reg.facility, reg.date_of_linkage, reg.ccc_number, reg.chv_id, reg.chv_names, reg.caregiver_names,
+reg.caregiverhivstatus, reg.schoollevel, reg.school_id, reg.school_name, reg.class, reg.registration_date, reg.exit_status, reg.exit_reason, reg.exit_date, reg.immunization
+'''
+
+QUERIES['caregivers_served'] = '''
+select ovc_care_events.person_id as Caregiver_CPIMSID,
+concat(reg_person.first_name,' ',reg_person.other_names,' ',reg_person.surname) as NAMES,
+reg_org_unit.org_unit_name as CBO,
+list_general.item_description as Service,
+list_geo.area_name as ward, scc.area_name as constituency,
+cc.area_name as county,
+CASE domain
+WHEN 'DSHC' THEN 'Shelter and Care'
+WHEN 'DPSS' THEN 'Psychosocial Support'
+WHEN 'DPRO' THEN 'Protection'
+WHEN 'DHES' THEN 'HouseHold Economic Strengthening'
+WHEN 'DHNU' THEN 'Health and Nutrition'
+ELSE 'Education' END AS Domain,
+CASE right(entity, 1) WHEN 's' THEN 'Service' ELSE 'Assessment'
+END AS visittype,
+CASE reg_person.sex_id WHEN 'SFEM' THEN 'Female' ELSE 'Male' END AS Gender,
+ovc_registration.registration_date, 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) AS age,
+
+CASE
+WHEN ovc_registration.hiv_status = 'HSTP' THEN 'POSITIVE'
+WHEN ovc_registration.hiv_status = 'HSTN' THEN 'NEGATIVE'
+ELSE 'NOT KNOWN' END AS OVCHIVstatus,
+CASE ovc_registration.art_status
+WHEN 'ARAR' THEN 'ART'
+WHEN 'ARPR' THEN 'ART'
+ELSE NULL END AS ART_STATUS,
+
+reg_person.date_of_birth AS DOB,
+
+CASE
+WHEN date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) < 1 THEN 'a.[<1yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 1 AND 4 THEN 'b.[1-4yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 5 AND 9 THEN 'c.[5-9yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 10 AND 14 THEN 'd.[10-14yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 15 AND 17 THEN 'e.[15-17yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 18 AND 24 THEN 'f.[18-24yrs]'
+WHEN  date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 25 AND 40 THEN 'g. [25-40yrs]'
+WHEN date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 40 AND 50 THEN 'h. [40-50yrs]'
+WHEN date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 50 AND 60 THEN 'i. [50-60yrs]'
+WHEN date_part('year', age(timestamp '{end_date}', reg_person.date_of_birth)) BETWEEN 60 AND 65 THEN 'j. [60-65yrs]'
+ELSE 'k.[65+yrs]' END AS AgeRange
+from ovc_care_f1b
+inner join ovc_care_events on event_id=ovc_care_events.event
+left outer join reg_person on ovc_care_events.person_id=reg_person.id
+LEFT OUTER JOIN ovc_registration ON
+ovc_care_events.person_id=ovc_registration.caretaker_id
+left outer join reg_org_unit on child_cbo_id=reg_org_unit.id
+LEFT OUTER JOIN reg_persons_geo ON
+reg_persons_geo.person_id=ovc_registration.person_id
+left outer join list_geo on list_geo.area_id=reg_persons_geo.area_id
+left outer join list_geo as scc on scc.area_id=list_geo.parent_area_id
+left outer join list_geo as cc on cc.area_id=scc.parent_area_id
+left outer join list_general on entity=list_general.item_id
+where ovc_registration.is_active = True
+and ovc_registration.child_cbo_id in ({cbos})
+and ovc_care_events.date_of_event between '{start_date}' and '{end_date}'
+and list_general.field_name = 'form1b_items';
 '''
